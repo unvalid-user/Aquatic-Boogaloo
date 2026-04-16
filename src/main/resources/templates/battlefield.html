@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Battlefield Debug</title>
+    <style>
+        :root {
+            --cell-size: 36px;
+            --grid-color: #cbd5e1;
+            --ship-color: #3b82f6;
+            --ship-border: #1d4ed8;
+            --bg-color: #f8fafc;
+            --text-color: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+            background: #ffffff;
+        }
+
+        h1 {
+            margin: 0 0 16px;
+        }
+
+        .info {
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .board-wrapper {
+            overflow: auto;
+            border: 1px solid #cbd5e1;
+            padding: 16px;
+            background: white;
+            width: fit-content;
+            max-width: 100%;
+        }
+
+        .board {
+            position: relative;
+            background-color: var(--bg-color);
+            background-image:
+                    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: var(--cell-size) var(--cell-size);
+            border: 1px solid #94a3b8;
+        }
+
+        .ship {
+            position: absolute;
+            background: var(--ship-color);
+            border: 2px solid var(--ship-border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .ship:hover {
+            opacity: 1;
+        }
+
+        .legend {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .json-preview {
+            margin-top: 20px;
+        }
+
+        .json-preview pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow: auto;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+<h1>Просмотр расстановки кораблей</h1>
+
+<div class="info">
+    <div><strong>Ширина:</strong> <span id="width-value"></span></div>
+    <div><strong>Высота:</strong> <span id="height-value"></span></div>
+    <div><strong>Количество кораблей:</strong> <span id="ships-count"></span></div>
+</div>
+
+<div class="board-wrapper">
+    <div id="board" class="board"></div>
+</div>
+
+<div class="legend">
+    Корабли отображаются поверх сетки. Координаты считаются от верхнего левого угла, начиная с 0.
+</div>
+
+<div class="json-preview">
+    <h2>Исходные данные</h2>
+    <pre id="json-output"></pre>
+</div>
+
+<script th:inline="javascript">
+    const battlefield = JSON.parse(/*[[${battlefieldJson}]]*/ '{}');
+
+    const CELL_SIZE = 36;
+
+    const board = document.getElementById('board');
+    const widthValue = document.getElementById('width-value');
+    const heightValue = document.getElementById('height-value');
+    const shipsCount = document.getElementById('ships-count');
+    const jsonOutput = document.getElementById('json-output');
+
+    widthValue.textContent = battlefield.width;
+    heightValue.textContent = battlefield.height;
+    shipsCount.textContent = battlefield.ships?.length ?? 0;
+    jsonOutput.textContent = JSON.stringify(battlefield, null, 2);
+
+    board.style.width = (battlefield.width * CELL_SIZE) + 'px';
+    board.style.height = (battlefield.height * CELL_SIZE) + 'px';
+
+    for (const ship of battlefield.ships) {
+        const shipElement = document.createElement('div');
+        shipElement.className = 'ship';
+
+        shipElement.style.left = (ship.x * CELL_SIZE) + 'px';
+        shipElement.style.top = (ship.y * CELL_SIZE) + 'px';
+
+        if (ship.orientation === 'H') {
+            shipElement.style.width = (ship.length * CELL_SIZE) + 'px';
+            shipElement.style.height = CELL_SIZE + 'px';
+        } else {
+            shipElement.style.width = CELL_SIZE + 'px';
+            shipElement.style.height = (ship.length * CELL_SIZE) + 'px';
+        }
+
+        shipElement.textContent = ship.length;
+        shipElement.title = `length=${ship.length}, x=${ship.x}, y=${ship.y}, orientation=${ship.orientation}`;
+
+        board.appendChild(shipElement);
+    }
+</script>
+</body>
+</html>

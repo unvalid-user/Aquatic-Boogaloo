@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    # session lifetime
+    # store sessions
+    oauth2:
+      client:
+        registration:
+          discord:
+            provider: discord
+            client-id: ${DISCORD_CLIENT_ID}
+            client-secret: ${DISCORD_CLIENT_SECRET}
+            client-name: Discord
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_basic
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - identify
+              # - email
+              # - guilds.members.read
+
+        provider:
+          discord:
+            authorization-uri: https://discord.com/oauth2/authorize
+            token-uri: https://discord.com/api/v10/oauth2/token
+            user-info-uri: https://discord.com/api/v10/users/@me
+            user-name-attribute: id
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aquanticb_db
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: never
+
+  liquibase:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
