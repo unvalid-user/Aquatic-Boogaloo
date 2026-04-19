@@ -6,7 +6,7 @@ import com.example.aquaticboogaloo.entity.Game;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(config = MapStructConfig.class)
+@Mapper(config = MapStructConfig.class, uses = UserMapper.class)
 public interface GameMapper {
     @Mapping(
             target = "requiresPasswordToJoin",

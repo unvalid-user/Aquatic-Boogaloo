@@ -1,8 +1,7 @@
 package com.example.aquaticboogaloo.exception;
 
-import com.example.aquaticboogaloo.dto.response.ErrorResponse;
+import com.example.aquaticboogaloo.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import org.hibernate.HibernateError;
 import org.hibernate.HibernateException;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;

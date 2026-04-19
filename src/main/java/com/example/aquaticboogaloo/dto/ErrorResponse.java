@@ -1,4 +1,4 @@
-package com.example.aquaticboogaloo.dto.response;
+package com.example.aquaticboogaloo.dto;
 
 import lombok.Builder;
 import lombok.Getter;

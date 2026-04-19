@@ -1,13 +1,11 @@
 package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.entity.*;
-import com.example.aquaticboogaloo.entity.enums.ActionType;
-import com.example.aquaticboogaloo.entity.enums.GameStatus;
-import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
-import com.example.aquaticboogaloo.entity.enums.ShipStatus;
+import com.example.aquaticboogaloo.entity.enums.*;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import com.example.aquaticboogaloo.exception.BadRequestException;
+import com.example.aquaticboogaloo.repository.ActionRepository;
 import com.example.aquaticboogaloo.service.resolve_turn.ResolveActionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -87,16 +85,32 @@ public class GameLifecycleService {
         updateShipStatuses(game);
         updatePlayerStatuses(game);
 
+        // TODO: might be a problem with old data (actions)
         // resetting players' energy + adding bonuses for ships + bonuses for surviving
         game.getPlayers().stream()
                 .filter(player -> player.getStatus() != PlayerStatus.DEAD)
                 .forEach(player -> {
                     player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());
                     player.addPoints(game.getRuleset().getTurnSurviveBonus());
+
                     player.setStatus(PlayerStatus.PLANNING);
 
                     accrueShipBonuses(player);
                 });
+        // adding bonus if player didn't spend any energy this turn
+        game.getPlayers().stream()
+                .filter(player -> player.getStatus() != PlayerStatus.DEAD
+                        && player.getActions().stream()
+                        .filter(a -> a.getCreatedAtTurn() == game.getCurrentTurn())
+                        .allMatch(Action::isBonus))
+                .forEach(player -> {
+                    accrueBonus(
+                            player,
+                            game.getRuleset().getSkipTurnBonusType(),
+                            game.getRuleset().getSkipTurnBonusQuantity()
+                    );
+                });
+
 
         // increase game turn
         game.increaseTurn();
@@ -167,23 +181,27 @@ public class GameLifecycleService {
 
                     ShipRule shipRule = ruleset.getShipRule(shipType);
 
-                    ActionType actionType = null;
-                    switch (shipRule.bonusType()) {
-                        // TODO: fix race conditions
-                        case POINTS -> player.addPoints(shipRule.bonusQuantity() *n);
-                        case ENERGY -> player.setEnergy(player.getEnergy() + shipRule.bonusQuantity() *n);
-                        case FREE_ATTACK -> actionType = ActionType.ATTACK;
-                        case FREE_SHIELD -> actionType = ActionType.PLACE_SHIELD;
-                        case FREE_MINE -> actionType = ActionType.PLACE_MINE;
-                        case FREE_SCAN -> actionType = ActionType.SCAN;
-                    }
-                    if (actionType == null) return;
-
-                    BonusAction bonus = new BonusAction();
-                    bonus.setType(actionType);
-                    bonus.setQuantity(shipRule.bonusQuantity() *n);
-
-                    player.addBonus(bonus);
+                    accrueBonus(player, shipRule.bonusType(), shipRule.bonusQuantity() *n);
                 });
+    }
+
+    public void accrueBonus(Player player, BonusType type, int quantity) {
+        ActionType actionType = null;
+        switch (type) {
+            // TODO: race conditions possible
+            case POINTS -> player.addPoints(quantity);
+            case ENERGY -> player.setEnergy(player.getEnergy() + quantity);
+            case FREE_ATTACK -> actionType = ActionType.ATTACK;
+            case FREE_SHIELD -> actionType = ActionType.PLACE_SHIELD;
+            case FREE_MINE -> actionType = ActionType.PLACE_MINE;
+            case FREE_SCAN -> actionType = ActionType.SCAN;
+        }
+        if (actionType == null) return;
+
+        BonusAction bonus = new BonusAction();
+        bonus.setType(actionType);
+        bonus.setQuantity(quantity);
+
+        player.addBonus(bonus);
     }
 }

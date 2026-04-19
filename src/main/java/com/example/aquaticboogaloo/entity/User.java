@@ -19,9 +19,8 @@ public class User {
     @Column(unique = true)
     private String discordUserId;
 
-    private String discordUsername;
-    private String discordGlobalName;
-    private String discordAvatarFileName;
+    private String username;
+    private String avatarUrl;
 
     public User(String discordUserId) {
         this.discordUserId = discordUserId;

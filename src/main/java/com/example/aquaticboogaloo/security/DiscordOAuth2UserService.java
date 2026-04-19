@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +24,8 @@ public class DiscordOAuth2UserService implements OAuth2UserService<OAuth2UserReq
     private final UserRepository userRepository;
     private final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
 
+    // https://cdn.discordapp.com/avatars/1077633727150182402/3e44e4c5439cc30339d3391b936b7070.png
+    private static final String DISCORD_AVATAR_URL = "https://cdn.discordapp.com/avatars/%s/%s.png";
 
     @Override
     @Transactional
@@ -43,9 +44,8 @@ public class DiscordOAuth2UserService implements OAuth2UserService<OAuth2UserReq
         User user = userRepository.findByDiscordUserId(discordId)
                 .orElseGet(() -> new User(discordId));
 
-        user.setDiscordUsername((String) attributes.get("username"));
-        user.setDiscordGlobalName((String) attributes.get("global_name"));
-        user.setDiscordAvatarFileName((String) attributes.get("avatar"));
+        user.setUsername((String) attributes.get("username"));
+        user.setAvatarUrl(DISCORD_AVATAR_URL.formatted(discordId, attributes.get("avatar")));
 
         user = userRepository.save(user);
 

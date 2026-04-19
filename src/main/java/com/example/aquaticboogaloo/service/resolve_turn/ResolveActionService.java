@@ -155,8 +155,10 @@ public class ResolveActionService {
 
             var shipCell = getShipCellByCoordinate(game, point.x(), point.y());
             if (shipCell.isPresent() && !shipCell.get().isDestroyed()) {
-                var attackHits = resolveShipAttackHits(actions, shipCell.get());
-                shipAttackHits.put(shipCell.get().getShip(), attackHits);
+                List<AttackHit> attackHits = resolveShipAttackHits(actions, shipCell.get());
+                shipAttackHits
+                        .computeIfAbsent(shipCell.get().getShip(), ship -> new ArrayList<>())
+                        .addAll(attackHits);
                 return;
             }
 
@@ -196,6 +198,11 @@ public class ResolveActionService {
                             player.addPoints(player.getGame().getRuleset().getShipDestroyBonus())
                     );
         });
+
+        var attackHits = shipAttackHits.values().stream()
+                .flatMap(Collection::stream)
+                .toList();
+        attackHitRepository.saveAll(attackHits);
     }
 
     /*

@@ -42,4 +42,9 @@ public class Action {
     private ActionStatus status = ActionStatus.PLANNED;
 
     private String failCauseMessage;
+
+
+    public boolean isBonus() {
+        return energyCost == null;
+    }
 }

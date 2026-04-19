@@ -1,11 +1,14 @@
 package com.example.aquaticboogaloo.repository;
 
 import com.example.aquaticboogaloo.entity.Player;
+import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -45,4 +48,12 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     WHERE p.id = :playerId
     """)
     int addPlayerPoints(Long playerId, int amount);
+
+    @Query("""
+    SELECT p.game.id AS gameId, COUNT(p) AS playersCount
+    FROM Player p
+    WHERE p.game.id IN :gameIds
+    GROUP BY p.game.id
+    """)
+    List<GamePlayersCountProjection> countPlayersByGameIds(Collection<Long> gameIds);
 }

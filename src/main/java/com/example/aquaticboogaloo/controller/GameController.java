@@ -1,5 +1,7 @@
 package com.example.aquaticboogaloo.controller;
 
+import com.example.aquaticboogaloo.dto.PagedResponse;
+import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.dto.request.CreateGameJoinRequest;
 import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
 import com.example.aquaticboogaloo.dto.response.GameJoinResponse;
@@ -12,6 +14,9 @@ import com.example.aquaticboogaloo.service.GameLifecycleService;
 import com.example.aquaticboogaloo.service.GameService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -38,10 +43,17 @@ public class GameController {
                 .build();
     }
 
+    @DeleteMapping("/{gameId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteGame(
+            @CurrentUserId Long userId,
+            @PathVariable Long gameId
+    ) {
+        gameService.deleteGame(gameId, userId);
+    }
 
-    // TODO: GetPaged sort + filter
+    // TODO:
     //  + add/remove moderators
-    //  + DeleteMapping for NEW games
     //  + PatchMapping for game/ruleset
 
 
@@ -49,8 +61,15 @@ public class GameController {
     public GameResponse getGameById(
             @PathVariable Long gameId
     ) {
-        Game game = gameService.findGameById(gameId);
-        return gameMapper.toResponse(game);
+        return gameService.getGameResponseWithPlayersCount(gameId);
+    }
+
+    @GetMapping
+    public PagedResponse<GameResponse> getAllPaged(
+            @PageableDefault Pageable pageable,
+            @ModelAttribute GameFilter gameFilter
+    ) {
+        return gameService.findAllPaged(pageable, gameFilter);
     }
 
     // TODO: test
@@ -64,16 +83,18 @@ public class GameController {
     }
 
     @PatchMapping("/{gameId}/start")
-    public Game startGame(
+    public void startGame(
             @PathVariable Long gameId,
             @CurrentUserId Long userId
     ) {
-        return gameLifecycleService.startGame(gameId, userId);
-        // TODO: redirect or response
+        gameLifecycleService.startGame(gameId, userId);
     }
 
     @GetMapping("/{gameId}/field")
-    public void getGameField() {
+    public void getGameField(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
         // TODO
         // only current user's objects
     }
