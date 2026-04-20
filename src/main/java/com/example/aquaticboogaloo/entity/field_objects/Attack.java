@@ -3,7 +3,6 @@ package com.example.aquaticboogaloo.entity.field_objects;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.enums.AttackStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

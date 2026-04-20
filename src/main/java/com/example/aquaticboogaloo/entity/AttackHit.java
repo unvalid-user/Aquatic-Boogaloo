@@ -3,6 +3,7 @@ package com.example.aquaticboogaloo.entity;
 import com.example.aquaticboogaloo.entity.enums.AttackHitImpact;
 import com.example.aquaticboogaloo.entity.enums.FieldObjectType;
 import com.example.aquaticboogaloo.entity.field_objects.Attack;
+import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,10 @@ public class AttackHit {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FieldObjectType objectType;
+
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "mine_hit_back_ship_cell_id")
+    private ShipCell mineHitBack;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

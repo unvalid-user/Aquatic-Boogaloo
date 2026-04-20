@@ -3,6 +3,7 @@ package com.example.aquaticboogaloo.service.resolve_turn;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.AttackHit;
 import com.example.aquaticboogaloo.entity.Game;
+import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.enums.*;
 import com.example.aquaticboogaloo.entity.field_objects.*;
 import com.example.aquaticboogaloo.repository.*;
@@ -134,7 +135,7 @@ public class ResolveActionService {
     + damage to the random attacker's ship
 
 
-    if ship hit - ALL attackers get bonus
+    if ship have been hit - ALL attackers get bonus
     shipCell destroys at the end of the function
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -144,8 +145,7 @@ public class ResolveActionService {
         var groupedByCoords = attackActions.stream()
                 .collect(Collectors.groupingBy(a -> new Point(a.getLocationX(), a.getLocationY())));
 
-        // TODO: map might not work
-        Map<Ship, List<AttackHit>> shipAttackHits = new HashMap<>();
+        Map<Ship, Set<AttackHit>> shipAttackHits = new HashMap<>();
         groupedByCoords.forEach((point, actions) -> {
             var shields = getShieldsByCoordinate(game, point.x(), point.y());
             if (!shields.isEmpty()) {
@@ -155,16 +155,25 @@ public class ResolveActionService {
 
             var shipCell = getShipCellByCoordinate(game, point.x(), point.y());
             if (shipCell.isPresent() && !shipCell.get().isDestroyed()) {
-                List<AttackHit> attackHits = resolveShipAttackHits(actions, shipCell.get());
+                var attackHits = resolveShipAttackHits(actions, shipCell.get());
                 shipAttackHits
-                        .computeIfAbsent(shipCell.get().getShip(), ship -> new ArrayList<>())
+                        .computeIfAbsent(shipCell.get().getShip(), ship -> new HashSet<>())
                         .addAll(attackHits);
+
                 return;
             }
 
             var mine = getMineByCoordinate(game, point.x(), point.y());
             if (mine.isPresent()) {
-                resolveMineAttackHits(actions, mine.get());
+                resolveMineAttackHits(actions, mine.get()).stream()
+                        .filter(attackHit -> attackHit.getMineHitBack() != null)
+                        .collect(Collectors.groupingBy(attackHit -> attackHit.getMineHitBack().getShip()))
+                        .forEach((ship, hits) -> {
+                            shipAttackHits
+                                    .computeIfAbsent(ship, ship_ -> new HashSet<>())
+                                    .addAll(hits);
+                        });
+
                 return;
             }
 
@@ -182,20 +191,24 @@ public class ResolveActionService {
         });
 
         shipAttackHits.forEach((ship, hits) -> {
-            boolean shipNotDestroyed = ship.getShipCells().stream()
-                    .anyMatch(shipCell -> !shipCell.isDestroyed());
-            if (shipNotDestroyed) return;
+            if (!changeShipStatusToDestroyed(ship)) return;
 
-            ship.setStatus(ShipStatus.DESTROYED);
+            var shipHits = hits.stream()
+                    .filter(hit -> hit.getMineHitBack() == null)
+                    .toList();
 
-            hits.forEach(attackHit -> {
-                attackHit.setHitImpact(AttackHitImpact.DESTROYED);
-            });
-            hits.stream()
+            var mineHits = hits.stream()
+                    .filter(hit -> hit.getMineHitBack() != null)
+                    .toList();
+
+            shipHits.forEach(hit -> {
+                        hit.setHitImpact(AttackHitImpact.DESTROYED);
+                    });
+            shipHits.stream()
                     .map(hit -> hit.getAttack().getAction().getActor())
                     .distinct()
                     .forEach(player ->
-                            player.addPoints(player.getGame().getRuleset().getShipDestroyBonus())
+                            player.addPoints(game.getRuleset().getShipDestroyBonus())
                     );
         });
 
@@ -205,14 +218,23 @@ public class ResolveActionService {
         attackHitRepository.saveAll(attackHits);
     }
 
+    private boolean changeShipStatusToDestroyed(Ship ship) {
+        boolean shipNotDestroyed = ship.getShipCells().stream()
+                .anyMatch(shipCell -> !shipCell.isDestroyed());
+        if (shipNotDestroyed) return false;
+
+        ship.setStatus(ShipStatus.DESTROYED);
+        return true;
+    }
+
     /*
     create and save Attack + AttackHits
     mine penalty
+    set ShipCell.isDestroyed = true
+    set Ship.status = DAMAGED
     delete mine
-
-    TODO: SHOULD be in a separate transaction
      */
-    private void resolveMineAttackHits(List<Action> actions, Mine mine) {
+    private List<AttackHit> resolveMineAttackHits(List<Action> actions, Mine mine) {
         List<AttackHit> attackHits = new ArrayList<>();
         actions.forEach(action -> {
             Attack attack = new Attack();
@@ -227,25 +249,31 @@ public class ResolveActionService {
 
             attackHits.add(attackHit);
 
-            var shipCells = action.getActor().getShips().stream()
-                    .flatMap(ship -> ship.getShipCells().stream())
-                    .filter(sc -> !sc.isDestroyed())
-                    .toList();
-            // if empty -> player is dead -> just subtract points
+            // damage back
+            var shipCells = getIntactShipCellsByPlayer(action.getActor());
+            // damage attacker's ship IF player is ALIVE
             if (!shipCells.isEmpty()) {
                 ShipCell randomShipCell = shipCells.get((new Random()).nextInt(shipCells.size()));
 
-                // TODO: cascade
+                attackHit.setMineHitBack(randomShipCell);
+
                 randomShipCell.setDestroyed(true);
+                randomShipCell.getShip().setStatus(ShipStatus.DAMAGED);
             }
-            action.getActor().removePoints(action.getActor().getGame().getRuleset().getShipHitPenalty());
+
+            mine.getAction().getActor()
+                    .addPoints(action.getActor().getGame().getRuleset().getMineHitBackBonus());
+            action.getActor()
+                    .removePoints(action.getActor().getGame().getRuleset().getMineHitBackPenalty());
 
             action.setStatus(ActionStatus.COMPLETED);
         });
 
         mineRepository.delete(mine);
-        attackHitRepository.saveAll(attackHits);
+
+        return attackHits;
     }
+
 
     /*
     create and RETURN (not save yet) Attack + AttackHits
@@ -274,8 +302,8 @@ public class ResolveActionService {
         });
 
         shipCell.setDestroyed(true);
-        // TODO: cascade
         shipCell.getShip().setStatus(ShipStatus.DAMAGED);
+
         return attackHits;
     }
 
@@ -309,6 +337,13 @@ public class ResolveActionService {
         shieldRepository.deleteAll(shields);
     }
 
+
+    private List<ShipCell> getIntactShipCellsByPlayer(Player player) {
+        return player.getShips().stream()
+                .flatMap(ship -> ship.getShipCells().stream())
+                .filter(sc -> !sc.isDestroyed())
+                .toList();
+    }
 
 
     public int getShipCellsNumberInRadius(Game game, int x, int y, int r) {

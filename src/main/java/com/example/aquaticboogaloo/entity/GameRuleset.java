@@ -39,6 +39,8 @@ public class GameRuleset {
     private int turnSurviveBonus = 2;
     private int shipHitBonus = 1;
     private int shipHitPenalty = 1;
+    private int mineHitBackBonus = 0;
+    private int mineHitBackPenalty = 0;
     private int shipDestroyBonus = 1;
 
     // TODO: this is NOT OK
