@@ -1,6 +1,7 @@
 package com.example.aquaticboogaloo.repository;
 
 import com.example.aquaticboogaloo.entity.Player;
+import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,8 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, Long> {
-    boolean existsByUserIdAndGameId(Long userId, Long gameId);
-    Optional<Player> findByUserIdAndGameId(Long userId, Long gameId);
+    boolean existsByUser_IdAndGame_Id(Long userId, Long gameId);
+    Optional<Player> findByUser_IdAndGame_Id(Long userId, Long gameId);
 
     @Modifying
     @Query("""
@@ -56,4 +57,6 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     GROUP BY p.game.id
     """)
     List<GamePlayersCountProjection> countPlayersByGameIds(Collection<Long> gameIds);
+
+    int countByGame_IdAndStatus(Long id, PlayerStatus status);
 }

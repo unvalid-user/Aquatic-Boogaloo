@@ -3,10 +3,10 @@ package com.example.aquaticboogaloo.service;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.User;
+import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
-import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,12 +28,12 @@ public class PlayerService {
     }
 
     public void playerShouldNotExist(Long gameId, Long userId) {
-        if (playerRepository.existsByUserIdAndGameId(userId, gameId))
+        if (playerRepository.existsByUser_IdAndGame_Id(userId, gameId))
             throw new ResourceAlreadyExistsException(PLAYER, USER + ID, userId);
     }
 
     public Player findPlayerByUserIdAndGameId(Long gameId, Long userId) {
-        return playerRepository.findByUserIdAndGameId(userId, gameId)
+        return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
                 .orElseThrow(AccessDeniedException::new);
     }
 
@@ -47,6 +47,10 @@ public class PlayerService {
         int rows = playerRepository.addPlayerEnergy(playerId, energyAmount);
 
         // TODO: if (rows < 1)?
+    }
+
+    public int countPlanningPlayersByGameId(Long gameId) {
+        return playerRepository.countByGame_IdAndStatus(gameId, PlayerStatus.PLANNING);
     }
 }
 

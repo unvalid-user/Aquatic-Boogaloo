@@ -19,5 +19,5 @@ public class GameResponse {
     private Integer currentTurn;
     private Integer remainTurns;
     private Instant endsAt;
-    private Instant nextTurnAt;
+    private Instant turnAdvanceAt;
 }

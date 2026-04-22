@@ -3,10 +3,12 @@ package com.example.aquaticboogaloo.repository.specification;
 import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Game_;
+import com.example.aquaticboogaloo.entity.User_;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 public class GameSpecifications {
+
     public static Specification<Game> withFilter(GameFilter filter) {
         if (filter == null) return Specification.unrestricted();
 
@@ -15,6 +17,26 @@ public class GameSpecifications {
                 withStatus(filter.status()),
                 hasPassword(filter.requiresPasswordToJoin())
         );
+    }
+    // TODO: test
+    public static Specification<Game> withFilter(GameFilter filter, Long userId) {
+        return withFilter(filter).and(withHostId(userId).or(withModeratorId(userId)));
+    }
+
+    private static Specification<Game> withModeratorId(Long userId) {
+        return (root, query, cb) -> {
+            if (userId == null) return null;
+
+            return cb.equal(root.join(Game_.moderators).get(User_.id), userId);
+        };
+    }
+
+    private static Specification<Game> withHostId(Long userId) {
+        return (root, query, cb) -> {
+            if (userId == null) return null;
+
+            return cb.equal(root.get(Game_.hostUser).get(User_.id), userId);
+        };
     }
 
     private static Specification<Game> withTitleContains(String value) {

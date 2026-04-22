@@ -9,12 +9,14 @@ import com.example.aquaticboogaloo.entity.enums.ActionStatus;
 import com.example.aquaticboogaloo.entity.enums.ActionType;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
+import com.example.aquaticboogaloo.event.PlayerCommitedActionsEvent;
 import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.ActionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +33,8 @@ public class ActionService {
     private final ActionValidationService actionValidationService;
     private final ActionRepository actionRepository;
     private final BonusActionService bonusActionService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public ActionCreationResponse createActions(Long gameId, Long userId, List<ActionRequest> actionRequests) {
@@ -56,7 +60,6 @@ public class ActionService {
         cancelAction(action);
     }
 
-    // requires transaction
     private void cancelAction(Action action) {
         if (action.getEnergyCost() == null) {
             if (!bonusActionService.addBonus(action.getActor(), action.getType())) {
@@ -92,8 +95,16 @@ public class ActionService {
     public void endTurn(Long gameId, Long userId) {
         Player player = getPlayerAndValidate(gameId, userId);
 
-        // TODO: warning if player have bonuses?
+        boolean playerHasBonuses = player.getBonuses().stream()
+                .filter(bonus -> bonus.getType() != ActionType.ATTACK)
+                .anyMatch(bonus -> bonus.getQuantity() > 0);
+
+        if (playerHasBonuses) {
+            throw new BadRequestException(PLAYER_HAS_BONUSES);
+        }
 
         player.setStatus(PlayerStatus.COMMITED_ACTIONS);
+
+        eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
     }
 }

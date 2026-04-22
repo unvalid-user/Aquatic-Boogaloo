@@ -5,7 +5,6 @@ import com.example.aquaticboogaloo.entity.enums.*;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import com.example.aquaticboogaloo.exception.BadRequestException;
-import com.example.aquaticboogaloo.repository.ActionRepository;
 import com.example.aquaticboogaloo.service.resolve_turn.ResolveActionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ public class GameLifecycleService {
     private final GameService gameService;
     private final ResolveActionService resolveActionService;
     private final GameObjectsService gameObjectsService;
+    private final PlayerService playerService;
 
 
     // TODO: test
@@ -43,6 +43,7 @@ public class GameLifecycleService {
             accrueShipBonuses(player);
         });
 
+        game.setTurnAdvanceAt();
         game.setStatus(GameStatus.ACTIVE);
         return game;
 
@@ -57,6 +58,15 @@ public class GameLifecycleService {
          *
          *  Host can preview field and re-generate it
          */
+    }
+
+
+
+    @Transactional
+    public void resolveTurnIfAllPlayersReady(Long gameId) {
+        if (playerService.countPlanningPlayersByGameId(gameId) > 0) return;
+
+        resolveTurn(gameId);
     }
 
     /*
@@ -85,11 +95,14 @@ public class GameLifecycleService {
         updateShipStatuses(game);
         updatePlayerStatuses(game);
 
+
+        var alivePlayers = game.getPlayers().stream()
+                .filter(player -> player.getStatus() != PlayerStatus.DEAD)
+                .toList();
+
         // TODO: might be a problem with old data (actions)
         // resetting players' energy + adding bonuses for ships + bonuses for surviving
-        game.getPlayers().stream()
-                .filter(player -> player.getStatus() != PlayerStatus.DEAD)
-                .forEach(player -> {
+        alivePlayers.forEach(player -> {
                     player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());
                     player.addPoints(game.getRuleset().getTurnSurviveBonus());
 
@@ -97,10 +110,9 @@ public class GameLifecycleService {
 
                     accrueShipBonuses(player);
                 });
-        // adding bonus if player didn't spend any energy this turn
-        game.getPlayers().stream()
-                .filter(player -> player.getStatus() != PlayerStatus.DEAD
-                        && player.getActions().stream()
+        // adding bonus if player didn't plan any actions (except bonuses)
+        alivePlayers.stream()
+                .filter(player -> player.getActions().stream()
                         .filter(a -> a.getCreatedAtTurn() == game.getCurrentTurn())
                         .allMatch(Action::isBonus))
                 .forEach(player -> {
@@ -113,7 +125,7 @@ public class GameLifecycleService {
 
 
         // increase game turn
-        game.increaseTurn();
+        game.advanceTurn();
 
         // deleting expired field objects
         gameObjectsService.deleteExpiredScans(game);

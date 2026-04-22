@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -95,8 +96,15 @@ public class GameService {
         return gameRepository.findGameIdsWithExpiredTurn(Instant.now(), GameStatus.ACTIVE);
     }
 
+    public PagedResponse<GameResponse> findAllPaged(Pageable pageable, GameFilter gameFilter, Long userId) {
+        var specs = GameSpecifications.withFilter(gameFilter, userId);
+        return findAllPaged(pageable, specs);
+    }
     public PagedResponse<GameResponse> findAllPaged(Pageable pageable, GameFilter gameFilter) {
         var specs = GameSpecifications.withFilter(gameFilter);
+        return findAllPaged(pageable, specs);
+    }
+    private PagedResponse<GameResponse> findAllPaged(Pageable pageable, Specification<Game> specs) {
         Page<Game> gamesPage = gameRepository.findAll(specs, pageable);
         Map<Long, Integer> gamePlayerCounts = playerRepository.countPlayersByGameIds(gamesPage.map(Game::getId).getContent())
                 .stream()

@@ -4,6 +4,7 @@ import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +56,14 @@ public class Game {
     @Column(nullable = false)
     private int currentTurn = 0;
 
+    // if all players commited actions -> force next turn
+    private boolean forceNextTurn = false;
+
     private Integer remainTurns;
     private Instant endsAt;
-    private Instant nextTurnAt;
+    private Instant turnAdvanceAt;
+    @Column(nullable = false)
+    private Duration turnDuration = Duration.ofDays(1);
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "game_ruleset_id", nullable = false)
@@ -69,8 +75,14 @@ public class Game {
         players.add(player);
     }
 
-    public void increaseTurn() {
+    public void advanceTurn() {
         currentTurn++;
-        remainTurns--;
+        if (remainTurns != null) remainTurns--;
+        // TODO
+        setTurnAdvanceAt();
+    }
+
+    public void setTurnAdvanceAt() {
+        turnAdvanceAt = Instant.now().plus(turnDuration);
     }
 }
