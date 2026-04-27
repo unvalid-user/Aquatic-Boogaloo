@@ -5,37 +5,48 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MineRepository extends JpaRepository<Mine, Long> {
-  @Query("""
+    @Query("""
     SELECT case
         when count(m) > 0 then true
         else false
         end
     FROM Mine m
-    WHERE m.action.actor.game.id = :gameId
+    WHERE m.game.id = :gameId
         AND m.action.locationX = :x
         AND m.action.locationY = :y
     """)
-  boolean existsByCoordinate(Long gameId, int x, int y);
+    boolean existsByCoordinate(Long gameId, int x, int y);
 
-  @Query("""
+    @Query("""
     SELECT m
     FROM Mine m
-    WHERE m.action.actor.game.id = :gameId
+    WHERE m.game.id = :gameId
         AND m.action.locationX = :x
         AND m.action.locationY = :y
     """)
-  Optional<Mine> findByCoordinate(Long gameId, int x, int y);
+    Optional<Mine> findByCoordinate(Long gameId, int x, int y);
 
-  @Query("""
+    @Query("""
     SELECT count(m)
     FROM Mine m
     WHERE m.action.locationX between :x - :r and :x + :r
         AND m.action.locationY between :y - :r and :y + :r
-        AND m.action.actor.game.id = :gameId
+        AND m.game.id = :gameId
     """)
-  int getNumberOfMinesInRadius(Long gameId, int x, int y, int r);
+    int getNumberOfMinesInRadius(Long gameId, int x, int y, int r);
+
+
+    @Query("""
+    SELECT m
+    FROM Mine m
+    WHERE m.action.locationX between :minX and :maxX
+        AND m.action.locationY between :minY and :maxY
+        AND m.game.id = :gameId
+    """)
+    List<Mine> findMinesInRegion(Long gameId, int minX, int minY, int maxX, int maxY);
 }

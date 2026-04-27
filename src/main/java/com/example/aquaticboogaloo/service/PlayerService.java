@@ -8,8 +8,13 @@ import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
+import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.INSUFFICIENT_ENERGY;
 import static com.example.aquaticboogaloo.util.EntityConst.*;
@@ -32,7 +37,7 @@ public class PlayerService {
             throw new ResourceAlreadyExistsException(PLAYER, USER + ID, userId);
     }
 
-    public Player findPlayerByUserIdAndGameId(Long gameId, Long userId) {
+    public Player findPlayerByGameIdAndUserId(Long gameId, Long userId) {
         return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
                 .orElseThrow(AccessDeniedException::new);
     }
@@ -51,6 +56,21 @@ public class PlayerService {
 
     public int countPlanningPlayersByGameId(Long gameId) {
         return playerRepository.countByGame_IdAndStatus(gameId, PlayerStatus.PLANNING);
+    }
+
+    public int getPlayersCountByGameId(Long gameId) {
+        return playerRepository.countPlayersByGameIds(List.of(gameId))
+                .getFirst()
+                .getPlayersCount();
+    }
+
+    public Map<Long, Integer> getPlayersCountsByGameIds(List<Long> gameIds) {
+        return playerRepository.countPlayersByGameIds(gameIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        GamePlayersCountProjection::getGameId,
+                        GamePlayersCountProjection::getPlayersCount
+                ));
     }
 }
 

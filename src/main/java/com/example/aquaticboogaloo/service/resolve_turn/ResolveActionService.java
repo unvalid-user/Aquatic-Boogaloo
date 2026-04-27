@@ -111,6 +111,7 @@ public class ResolveActionService {
                 action.setFailCauseMessage(MINE_BLOCK);
             } else {
                 Mine mine = new Mine();
+                mine.setGame(game);
                 mine.setAction(action);
                 mines.add(mine);
 

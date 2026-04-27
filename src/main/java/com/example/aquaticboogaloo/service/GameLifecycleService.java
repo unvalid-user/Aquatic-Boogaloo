@@ -1,27 +1,59 @@
 package com.example.aquaticboogaloo.service;
 
+import ch.qos.logback.classic.encoder.JsonEncoder;
+import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
 import com.example.aquaticboogaloo.entity.*;
 import com.example.aquaticboogaloo.entity.enums.*;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import com.example.aquaticboogaloo.exception.BadRequestException;
+import com.example.aquaticboogaloo.repository.GameRepository;
 import com.example.aquaticboogaloo.service.resolve_turn.ResolveActionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.NOT_ENOUGH_PLAYERS;
+import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_STATE;
 
 @Service
 @RequiredArgsConstructor
 public class GameLifecycleService {
     private final GameService gameService;
+    private final UserService userService;
     private final ResolveActionService resolveActionService;
     private final GameObjectsService gameObjectsService;
     private final PlayerService playerService;
+    private final PasswordEncoder passwordEncoder;
+    private final GameRepository gameRepository;
 
+    @Transactional
+    public Game createGame(CreateGameRequest request, Long userId) {
+        User user = userService.findUserById(userId);
+
+        GameRuleset ruleset = new GameRuleset();
+        ruleset.setCreatedBy(user);
+
+        Game game = new Game();
+        game.setHostUser(user);
+        game.setTitle(request.getTitle());
+        game.setRuleset(ruleset);
+        if (request.getPassword() != null && !request.getPassword().isEmpty())
+            game.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+
+        return gameRepository.save(game);
+    }
+
+    public void deleteGame(Long gameId, Long userId) {
+        Game game = gameService.findGameByIdAndHostId(gameId, userId);
+
+        if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
+
+        gameRepository.delete(game);
+    }
 
     // TODO: test
     @Transactional
@@ -100,7 +132,7 @@ public class GameLifecycleService {
                 .filter(player -> player.getStatus() != PlayerStatus.DEAD)
                 .toList();
 
-        // TODO: might be a problem with old data (actions)
+        // TODO: might be a problem with old data (game.actions)
         // resetting players' energy + adding bonuses for ships + bonuses for surviving
         alivePlayers.forEach(player -> {
                     player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());

@@ -72,7 +72,7 @@ public class ActionService {
     }
 
     private Player getPlayerAndValidate(Long gameId, Long userId) {
-        Player player = playerService.findPlayerByUserIdAndGameId(gameId, userId);
+        Player player = playerService.findPlayerByGameIdAndUserId(gameId, userId);
         Game game = player.getGame();
 
         if (player.getStatus() != PlayerStatus.PLANNING) {
@@ -105,6 +105,6 @@ public class ActionService {
 
         player.setStatus(PlayerStatus.COMMITED_ACTIONS);
 
-        eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
+        if (player.getGame().isForceNextTurn()) eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
     }
 }

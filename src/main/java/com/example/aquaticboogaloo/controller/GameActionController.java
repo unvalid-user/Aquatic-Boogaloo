@@ -5,6 +5,7 @@ import com.example.aquaticboogaloo.dto.response.ActionCreationResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.ActionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class GameActionController {
     }
 
     @DeleteMapping("/{actionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAction(
             @PathVariable Long gameId,
             @PathVariable Long actionId,

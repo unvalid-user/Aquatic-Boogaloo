@@ -30,7 +30,7 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     @Query("""
     SELECT g.id
     FROM Game g
-    WHERE g.nextTurnAt <= :now
+    WHERE g.turnAdvanceAt <= :now
         AND g.status = :status
     """)
     List<Long> findGameIdsWithExpiredTurn(Instant now, GameStatus status);

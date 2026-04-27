@@ -78,10 +78,10 @@ public class Game {
     public void advanceTurn() {
         currentTurn++;
         if (remainTurns != null) remainTurns--;
-        // TODO
         setTurnAdvanceAt();
     }
 
+    // TODO
     public void setTurnAdvanceAt() {
         turnAdvanceAt = Instant.now().plus(turnDuration);
     }

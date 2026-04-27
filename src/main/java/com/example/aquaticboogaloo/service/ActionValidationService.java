@@ -6,21 +6,16 @@ import com.example.aquaticboogaloo.dto.response.ActionCreationResponse;
 import com.example.aquaticboogaloo.dto.response.FailedValidationActionResponse;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.enums.ActionType;
-import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.entity.enums.ShipStatus;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import com.example.aquaticboogaloo.repository.ActionRepository;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
-import com.example.aquaticboogaloo.entity.enums.GameStatus;
-import com.example.aquaticboogaloo.exception.BadRequestException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
-import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 
 @Service
 @RequiredArgsConstructor
@@ -109,9 +104,7 @@ public class ActionValidationService {
     }
 
     /**
-     * @param player
-     * @param actionType
-     * @return true if bonus have been used
+     * true if bonus have been used
      */
     private boolean useBonusAction(Player player, ActionType actionType) {
         return bonusActionService.removeBonus(player, actionType);
