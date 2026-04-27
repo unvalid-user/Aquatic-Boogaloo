@@ -63,7 +63,7 @@ public class GameLifecycleService {
         if (game.getPlayers().size() < 2)
             throw new BadRequestException(NOT_ENOUGH_PLAYERS);
 
-        // TODO: not thread-safe
+        // TODO: fix race condition
         gameService.updateGameStatus(gameId, GameStatus.NEW, GameStatus.RESOLVING);
 
         GameFieldInitializer initializer = new GameFieldInitializer(game);
@@ -85,10 +85,7 @@ public class GameLifecycleService {
          * 4. set nextTurn time
          * 5. Change Game status
          *
-         *  Transaction Serializable or Atomic query
-         *  Mb select for update
-         *
-         *  Host can preview field and re-generate it
+         *  TODO: Host can preview field and re-generate it
          */
     }
 
@@ -115,7 +112,7 @@ public class GameLifecycleService {
      */
     @Transactional
     public void resolveTurn(Long gameId) {
-        // TODO: not thread-safe
+        // TODO: fix race condition
         gameService.updateGameStatus(gameId, GameStatus.ACTIVE, GameStatus.RESOLVING);
 
         Game game = gameService.findGameById(gameId);
@@ -132,7 +129,7 @@ public class GameLifecycleService {
                 .filter(player -> player.getStatus() != PlayerStatus.DEAD)
                 .toList();
 
-        // TODO: might be a problem with old data (game.actions)
+        // TODO: might be a problem with non-relevant data (player.actions)
         // resetting players' energy + adding bonuses for ships + bonuses for surviving
         alivePlayers.forEach(player -> {
                     player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());
