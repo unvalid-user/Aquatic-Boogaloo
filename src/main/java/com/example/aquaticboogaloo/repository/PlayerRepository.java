@@ -50,13 +50,5 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     """)
     int addPlayerPoints(Long playerId, int amount);
 
-    @Query("""
-    SELECT p.game.id AS gameId, COUNT(p) AS playersCount
-    FROM Player p
-    WHERE p.game.id IN :gameIds
-    GROUP BY p.game.id
-    """)
-    List<GamePlayersCountProjection> countPlayersByGameIds(Collection<Long> gameIds);
-
     int countByGame_IdAndStatus(Long id, PlayerStatus status);
 }

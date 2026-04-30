@@ -49,9 +49,11 @@ public class GameController {
 
     @GetMapping("/{gameId}")
     public GameResponse getGameById(
-            @PathVariable Long gameId
+            @PathVariable Long gameId,
+            @AuthenticationPrincipal CurrentUserView currentUser
     ) {
-        return gameService.buildGameResponseWithPlayersCount(gameId);
+        Long userId = getCurrentUserId(currentUser);
+        return gameService.buildGameResponseWithPlayersCount(gameId, userId);
     }
 
     @GetMapping
@@ -60,7 +62,7 @@ public class GameController {
             @ModelAttribute GameFilter gameFilter,
             @AuthenticationPrincipal CurrentUserView currentUser
     ) {
-        Long userId = currentUser == null ? null : currentUser.getUserId();
+        Long userId = getCurrentUserId(currentUser);
         return gameService.findAllPaged(pageable, gameFilter, userId);
     }
 
@@ -90,6 +92,9 @@ public class GameController {
         return gameService.buildGameFieldResponseForPlayerView(gameId, userId);
     }
 
+    private Long getCurrentUserId(CurrentUserView currentUser) {
+        return currentUser == null ? null : currentUser.getUserId();
+    }
 
     private URI buildUri(Long id) {
         return ServletUriComponentsBuilder

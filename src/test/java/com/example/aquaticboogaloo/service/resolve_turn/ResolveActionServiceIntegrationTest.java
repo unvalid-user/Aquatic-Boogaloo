@@ -237,6 +237,7 @@ class ResolveActionServiceIntegrationTest {
         context.defender.addShip(shipWithOneCell(2, 2));
         Shield shield = shield(2, 2, context.game.getCurrentTurn());
         context.defender.addAction(shield.getAction());
+        shield.setGame(context.game);
         gameRepository.saveAndFlush(context.game);
         shieldRepository.saveAndFlush(shield);
 

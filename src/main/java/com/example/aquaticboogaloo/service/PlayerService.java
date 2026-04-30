@@ -62,19 +62,5 @@ public class PlayerService {
         return playerRepository.countByGame_IdAndStatus(gameId, PlayerStatus.PLANNING);
     }
 
-    public int getPlayersCountByGameId(Long gameId) {
-        return playerRepository.countPlayersByGameIds(List.of(gameId))
-                .getFirst()
-                .getPlayersCount();
-    }
-
-    public Map<Long, Integer> getPlayersCountsByGameIds(List<Long> gameIds) {
-        return playerRepository.countPlayersByGameIds(gameIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        GamePlayersCountProjection::getGameId,
-                        GamePlayersCountProjection::getPlayersCount
-                ));
-    }
 }
 

@@ -16,6 +16,7 @@ import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.GameRepository;
+import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import com.example.aquaticboogaloo.repository.specification.GameSpecifications;
 import com.example.aquaticboogaloo.util.Point;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,8 @@ import org.springframework.stereotype.Service;
 
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_STATE;
 import static com.example.aquaticboogaloo.util.EntityConst.GAME;
@@ -58,13 +57,12 @@ public class GameService {
                 new ResourceNotFoundException(GAME, ID, gameId));
     }
 
-    public GameResponse buildGameResponseWithPlayersCount(Long gameId) {
-        GameResponse response = gameMapper.toResponse(findGameById(gameId));
-
-        int playersCount = playerService.getPlayersCountByGameId(gameId);
-        response.setPlayersCount(playersCount);
-
-        return response;
+    public GameResponse buildGameResponseWithPlayersCount(Long gameId, Long userId) {
+        return buildGameResponse(
+                findGameById(gameId),
+                getPlayersCountByGameId(gameId),
+                userId
+        );
     }
 
     public Game findGameByIdAndHostId(Long gameId, Long userId) {
@@ -80,6 +78,21 @@ public class GameService {
         return gameRepository.findGameIdsWithExpiredTurn(Instant.now(), GameStatus.ACTIVE);
     }
 
+    public int getPlayersCountByGameId(Long gameId) {
+        return gameRepository.countPlayersByGameIds(List.of(gameId))
+                .getFirst()
+                .getPlayersCount();
+    }
+
+    public Map<Long, Integer> getPlayersCountsByGameIds(List<Long> gameIds) {
+        return gameRepository.countPlayersByGameIds(gameIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        GamePlayersCountProjection::getGameId,
+                        GamePlayersCountProjection::getPlayersCount
+                ));
+    }
+
     public PagedResponse<GameResponse> findModeratedGamesPaged(Pageable pageable, GameFilter gameFilter, Long userId) {
         var specs = GameSpecifications.withFilter(gameFilter, userId);
         return findAllPaged(pageable, specs, null);
@@ -90,18 +103,11 @@ public class GameService {
     }
     private PagedResponse<GameResponse> findAllPaged(Pageable pageable, Specification<Game> specs, Long userId) {
         Page<Game> gamesPage = gameRepository.findAll(specs, pageable);
-        var gamePlayersCounts = playerService.getPlayersCountsByGameIds(gamesPage.map(Game::getId).getContent());
+        var gamePlayersCounts = getPlayersCountsByGameIds(gamesPage.map(Game::getId).getContent());
 
-        var gameResponsePage = gamesPage.map(game -> {
-            GameResponse gameResponse = gameMapper.toResponse(game);
-            gameResponse.setPlayersCount(gamePlayersCounts.get(game.getId()));
-
-            if (userId != null) {
-                gameResponse.setJoinedByCurrentUser(playerService.existsByUserAndGame(game.getId(), userId));
-            }
-
-            return gameResponse;
-        });
+        var gameResponsePage = gamesPage.map(game ->
+            buildGameResponse(game, gamePlayersCounts.getOrDefault(game.getId(), 0), userId)
+        );
 
         return PagedResponse.from(gameResponsePage);
     }
@@ -144,6 +150,17 @@ public class GameService {
         return buildGameFieldResponse(game, ships, mines, scans);
     }
 
+    private GameResponse buildGameResponse(Game game, int playersCount, Long currentUserId) {
+        GameResponse gameResponse = gameMapper.toResponse(game);
+        gameResponse.setPlayersCount(playersCount);
+
+        gameResponse.setJoinedByCurrentUser(
+                currentUserId != null
+                && playerService.existsByUserAndGame(game.getId(), currentUserId)
+        );
+
+        return gameResponse;
+    }
     private GameFieldResponse buildGameFieldResponse(Game game, Collection<Ship> ships, Collection<Mine> mines, Collection<Scan> scans) {
         var response = new GameFieldResponse();
         response.setFieldHeight(game.getFieldHeight());

@@ -31,7 +31,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/v3/api-docs"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/games").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/games", "/api/v1/games/{gameId}").permitAll()
                         .requestMatchers("/test-view/**").permitAll()
                         .anyRequest().authenticated()
                 )

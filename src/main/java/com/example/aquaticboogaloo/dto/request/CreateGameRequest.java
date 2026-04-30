@@ -7,6 +7,7 @@ import lombok.Data;
 public class CreateGameRequest {
     @NotBlank
     private String title;
+    private String description;
     // TODO: password validation
     private String password;
 }

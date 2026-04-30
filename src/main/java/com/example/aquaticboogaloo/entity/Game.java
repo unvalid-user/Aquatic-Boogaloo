@@ -69,6 +69,16 @@ public class Game {
     @JoinColumn(name = "game_ruleset_id", nullable = false)
     private GameRuleset ruleset;
 
+    public static Game buildWithRuleset(User host) {
+        Game game = new Game();
+        game.setHostUser(host);
+
+        GameRuleset ruleset = new GameRuleset();
+        ruleset.setCreatedBy(host);
+        game.setRuleset(ruleset);
+
+        return game;
+    }
 
     public void addPlayer(Player player) {
         player.setGame(this);

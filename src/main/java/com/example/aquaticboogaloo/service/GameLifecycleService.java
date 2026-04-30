@@ -35,15 +35,12 @@ public class GameLifecycleService {
     public Game createGame(CreateGameRequest request, Long userId) {
         User user = userService.findUserById(userId);
 
-        GameRuleset ruleset = new GameRuleset();
-        ruleset.setCreatedBy(user);
-
-        Game game = new Game();
-        game.setHostUser(user);
+        Game game = Game.buildWithRuleset(user);
         game.setTitle(request.getTitle());
-        game.setRuleset(ruleset);
-        if (request.getPassword() != null && !request.getPassword().isEmpty())
-            game.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        game.setDescription(request.getDescription());
+
+        if (request.getPassword() != null && !request.getPassword().isBlank())
+            game.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
 
         return gameRepository.save(game);
     }

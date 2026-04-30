@@ -2,6 +2,7 @@ package com.example.aquaticboogaloo.repository;
 
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
+import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,4 +50,13 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
         AND g.status = :status
     """)
     List<Long> findGameIdsWithExpiredTurn(Instant now, GameStatus status);
+
+    @Query("""
+    SELECT g.id AS gameId, COUNT(p) AS playersCount
+    FROM Game g
+    LEFT JOIN g.players p
+    WHERE g.id IN :gameIds
+    GROUP BY g.id
+    """)
+    List<GamePlayersCountProjection> countPlayersByGameIds(Collection<Long> gameIds);
 }
