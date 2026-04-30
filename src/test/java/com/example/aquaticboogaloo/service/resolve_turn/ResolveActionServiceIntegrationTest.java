@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.UUID;
 
 import static com.example.aquaticboogaloo.service.resolve_turn.ActionFailMessages.MINES_CONFLICT;
+import static com.example.aquaticboogaloo.util.EntityBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers(disabledWithoutDocker = true)
@@ -342,74 +343,7 @@ class ResolveActionServiceIntegrationTest {
         return new TestGameContext(game, attacker, defender);
     }
 
-    private Player player(User user) {
-        Player player = new Player();
-        player.setUser(user);
-        player.setStatus(PlayerStatus.PLANNING);
-        player.setEnergy(10);
-        player.setPoints(0);
-        return player;
-    }
 
-    private Action action(ActionType type, int x, int y, int turn) {
-        Action action = new Action();
-        action.setType(type);
-        action.setStatus(ActionStatus.PLANNED);
-        action.setCreatedAtTurn(turn);
-        action.setLocationX(x);
-        action.setLocationY(y);
-        action.setEnergyCost(1);
-        return action;
-    }
-
-    private Mine mine(int x, int y, int turn) {
-        Action action = action(ActionType.PLACE_MINE, x, y, turn);
-        action.setStatus(ActionStatus.COMPLETED);
-
-        Mine mine = new Mine();
-        mine.setAction(action);
-
-        return mine;
-    }
-
-    private Shield shield(int x, int y, int turn) {
-        Action action = action(ActionType.PLACE_SHIELD, x, y, turn);
-        action.setStatus(ActionStatus.COMPLETED);
-
-        Shield shield = new Shield();
-        shield.setAction(action);
-
-        return shield;
-    }
-
-    private Ship shipWithOneCell(int x, int y) {
-        Ship ship = new Ship();
-        ship.setType(ShipType.K1);
-
-        ShipCell cell = new ShipCell();
-        cell.setLocationX(x);
-        cell.setLocationY(y);
-        ship.addCell(cell);
-
-        return ship;
-    }
-
-    private Ship shipWithTwoCells(int x, int y) {
-        Ship ship = new Ship();
-        ship.setType(ShipType.K1);
-
-        ShipCell cell1 = new ShipCell();
-        cell1.setLocationX(x);
-        cell1.setLocationY(y);
-        ship.addCell(cell1);
-
-        ShipCell cell2 = new ShipCell();
-        cell2.setLocationX(x);
-        cell2.setLocationY(y-1);
-        ship.addCell(cell2);
-
-        return ship;
-    }
 
     private record TestGameContext(Game game, Player attacker, Player defender) {
     }

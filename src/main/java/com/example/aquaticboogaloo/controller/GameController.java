@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -55,7 +54,7 @@ public class GameController {
 
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
-            @PageableDefault Pageable pageable,
+            Pageable pageable,
             @ModelAttribute GameFilter gameFilter
     ) {
         return gameService.findAllPaged(pageable, gameFilter);

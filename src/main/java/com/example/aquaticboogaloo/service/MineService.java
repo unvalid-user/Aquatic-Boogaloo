@@ -14,7 +14,6 @@ public class MineService {
 
     private final MineRepository mineRepository;
 
-
     public List<Mine> findMinesAroundShip(Long gameId, int visionRadius, Point min, Point max) {
         return mineRepository.findMinesInRegion(
                 gameId,
@@ -23,5 +22,13 @@ public class MineService {
                 max.x() + visionRadius,
                 max.y() + visionRadius
         );
+    }
+
+    public List<Mine> findPlayerMines(Long playerId) {
+        return mineRepository.findMinesByPlayerId(playerId);
+    }
+
+    public List<Mine> findGameMines(Long gameId) {
+        return mineRepository.findByGame_Id(gameId);
     }
 }

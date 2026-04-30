@@ -1,8 +1,8 @@
 package com.example.aquaticboogaloo.entity.field_objects;
 
 import com.example.aquaticboogaloo.entity.Action;
+import com.example.aquaticboogaloo.entity.Game;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Scan {
+public class Scan implements ActionObject {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -20,6 +20,10 @@ public class Scan {
     @OneToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "action_id", nullable = false)
     private Action action;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "game_id", nullable = false)
+    private Game game;
 
     @Column(nullable = false)
     private int expirationTurn;

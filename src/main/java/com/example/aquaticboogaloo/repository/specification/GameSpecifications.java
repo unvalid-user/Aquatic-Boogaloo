@@ -18,7 +18,6 @@ public class GameSpecifications {
                 hasPassword(filter.requiresPasswordToJoin())
         );
     }
-    // TODO: test
     public static Specification<Game> withFilter(GameFilter filter, Long userId) {
         return withFilter(filter).and(withHostId(userId).or(withModeratorId(userId)));
     }

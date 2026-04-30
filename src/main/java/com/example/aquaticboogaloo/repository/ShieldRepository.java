@@ -16,7 +16,7 @@ public interface ShieldRepository extends JpaRepository<Shield, Long> {
         else false
         end
     FROM Shield s
-    WHERE s.action.actor.game.id = :gameId
+    WHERE s.game.id = :gameId
         AND s.action.locationX = :x
         AND s.action.locationY = :y
     """)
@@ -25,7 +25,7 @@ public interface ShieldRepository extends JpaRepository<Shield, Long> {
     @Query("""
     SELECT s
     FROM Shield s
-    WHERE s.action.actor.game.id = :gameId
+    WHERE s.game.id = :gameId
         AND s.action.locationX = :x
         AND s.action.locationY = :y
     """)
@@ -34,7 +34,7 @@ public interface ShieldRepository extends JpaRepository<Shield, Long> {
     @Modifying
     @Query("""
     DELETE Shield s
-    WHERE s.action.actor.game.id = :gameId
+    WHERE s.game.id = :gameId
         AND s.expirationTurn < :currentTurn
     """)
     int deleteExpiredShields(Long gameId, int currentTurn);

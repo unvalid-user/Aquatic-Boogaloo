@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Attack {
+public class Attack implements ActionObject {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

@@ -14,8 +14,22 @@ import java.util.Optional;
 
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
-    // TODO: test
-    Optional<Game> findByIdAndHostUserId(Long gameId, Long userId);
+    Optional<Game> findByIdAndHostUser_Id(Long gameId, Long userId);
+
+    @Query("""
+    SELECT g
+    FROM Game g
+    WHERE g.id = :gameId
+        AND (
+            g.hostUser.id = :userId
+            OR EXISTS (
+                SELECT 1
+                FROM g.moderators m
+                WHERE m.id = :userId
+            )
+        )
+    """)
+    Optional<Game> findGameByIdAndHostIdOrModeratorId(Long gameId, Long userId);
 
     @Modifying
     @Query("""

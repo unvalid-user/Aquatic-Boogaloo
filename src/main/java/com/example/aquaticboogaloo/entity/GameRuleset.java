@@ -29,6 +29,9 @@ public class GameRuleset {
     private int defaultPlayerEnergy = 5;
     private int defaultPlayerPoints = 0;
 
+    // TODO
+//    private int shieldLifetimeInTurns = 1;
+
     private int attackEnergyCost = 2;
     private int shieldEnergyCost = 3;
     private int mineEnergyCost = 1;

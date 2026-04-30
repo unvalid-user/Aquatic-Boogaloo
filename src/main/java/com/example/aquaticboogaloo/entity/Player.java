@@ -2,6 +2,7 @@ package com.example.aquaticboogaloo.entity;
 
 import com.example.aquaticboogaloo.entity.enums.BonusType;
 import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
+import com.example.aquaticboogaloo.entity.field_objects.Scan;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import jakarta.persistence.*;
 import lombok.Getter;

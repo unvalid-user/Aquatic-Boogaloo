@@ -49,4 +49,13 @@ public interface MineRepository extends JpaRepository<Mine, Long> {
         AND m.game.id = :gameId
     """)
     List<Mine> findMinesInRegion(Long gameId, int minX, int minY, int maxX, int maxY);
+
+    @Query("""
+    SELECT m
+    FROM Mine m
+    WHERE m.action.actor.id = :playerId
+    """)
+    List<Mine> findMinesByPlayerId(Long playerId);
+
+    List<Mine> findByGame_Id(Long id);
 }

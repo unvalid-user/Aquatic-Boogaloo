@@ -3,13 +3,13 @@ package com.example.aquaticboogaloo.controller;
 import com.example.aquaticboogaloo.dto.PagedResponse;
 import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.dto.response.GameResponse;
+import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.GameLifecycleService;
 import com.example.aquaticboogaloo.service.GameService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +25,7 @@ public class GameManagementController {
 
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
-            @PageableDefault Pageable pageable,
+            Pageable pageable,
             @ModelAttribute GameFilter gameFilter,
             @CurrentUserId Long userId
     ) {
@@ -33,11 +33,11 @@ public class GameManagementController {
     }
 
     @GetMapping("/{gameId}/field")
-    public void getGameField(
+    public GameFieldResponse getGameField(
             @PathVariable Long gameId,
             @CurrentUserId Long userId
     ) {
-        // TODO
+        return gameService.buildGameFieldResponseForModeratorView(gameId, userId);
     }
 
     @GetMapping("/{gameId}/moderators")
@@ -50,7 +50,7 @@ public class GameManagementController {
 
     @GetMapping("/{gameId}/events")
     public void getAllEvents(
-            @PageableDefault Pageable pageable,
+            Pageable pageable,
             @PathVariable Long gameId,
             @CurrentUserId Long userId
             // TODO: EventFilter

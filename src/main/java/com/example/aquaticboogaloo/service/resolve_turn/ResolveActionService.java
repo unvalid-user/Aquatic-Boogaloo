@@ -37,6 +37,7 @@ public class ResolveActionService {
         List<Scan> scans = new ArrayList<>();
         scanActions.forEach(action -> {
             Scan scan = new Scan();
+            scan.setGame(game);
             scan.setAction(action);
             scan.setExpirationTurn(game.getCurrentTurn()+1);
             scan.setShipCellsNumber(getShipCellsNumberInRadius(
@@ -67,6 +68,7 @@ public class ResolveActionService {
         List<Shield> shields = new ArrayList<>();
         shieldActions.forEach(action -> {
             Shield shield = new Shield();
+            shield.setGame(game);
             shield.setAction(action);
             shield.setExpirationTurn(game.getCurrentTurn());
 
