@@ -19,8 +19,8 @@ public class GameFieldInitializerTest {
     void testGameFieldInitializer() {
         Game game = createGameWithPlayers();
 
-        GameFieldInitializer generator = new GameFieldInitializer(game);
-        generator.initializeAndBuildEntities();
+        GameFieldInitializer initializer = new GameFieldInitializer(game);
+        initializer.initializeAndBuildEntities();
 
         var rs = game.getRuleset();
         final int shipsQuantity = rs.getK1ShipsQuantity()

@@ -1,9 +1,6 @@
 package com.example.aquaticboogaloo.service;
 
-import com.example.aquaticboogaloo.controller.game_field_view.GameFieldView;
-import com.example.aquaticboogaloo.controller.game_field_view.ShipView;
 import com.example.aquaticboogaloo.entity.Game;
-import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
 import com.example.aquaticboogaloo.entity.enums.ShipType;
@@ -188,37 +185,6 @@ public class GameFieldInitializer {
         }).toList();
     }
 
-    private GameFieldView buildResponse() {
-        List<ShipView> ships = new LinkedList<>();
-
-        areas.forEach(area -> {
-            int x = area.min.x() + 1;
-            int y = area.min.y() + 1;
-            String orientation = "H";
-
-            int hLength = area.max.x() - area.min.x() -1;
-            int vLength = area.max.y() - area.min.y() -1;
-            int length = hLength;
-
-            if (vLength > hLength) {
-                orientation = "V";
-                length = vLength;
-            }
-
-            ships.add(new ShipView(
-                    length,
-                    x,
-                    y,
-                    orientation
-            ));
-        });
-
-        return new GameFieldView(
-                findFieldMaxX(),
-                findFieldMaxY(),
-                ships
-        );
-    }
 
     private int findShipMaxLength(int x, int y, Direction direction) {
         int n = 0;
