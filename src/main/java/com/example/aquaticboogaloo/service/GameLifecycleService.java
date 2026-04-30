@@ -25,10 +25,11 @@ public class GameLifecycleService {
     private final GameService gameService;
     private final UserService userService;
     private final ResolveActionService resolveActionService;
-    private final GameObjectsService gameObjectsService;
     private final PlayerService playerService;
     private final PasswordEncoder passwordEncoder;
     private final GameRepository gameRepository;
+    private final ScanService scanService;
+    private final ShieldService shieldService;
 
     @Transactional
     public Game createGame(CreateGameRequest request, Long userId) {
@@ -157,8 +158,8 @@ public class GameLifecycleService {
         game.advanceTurn();
 
         // deleting expired field objects
-        gameObjectsService.deleteExpiredScans(game);
-        gameObjectsService.deleteExpiredShields(game);
+        scanService.deleteExpiredScans(game);
+        shieldService.deleteExpiredShields(game);
 
         game.setStatus(GameStatus.ACTIVE);
     }
