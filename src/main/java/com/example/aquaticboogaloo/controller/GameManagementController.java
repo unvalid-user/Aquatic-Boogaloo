@@ -29,7 +29,7 @@ public class GameManagementController {
             @ModelAttribute GameFilter gameFilter,
             @CurrentUserId Long userId
     ) {
-        return gameService.findAllPaged(pageable, gameFilter, userId);
+        return gameService.findModeratedGamesPaged(pageable, gameFilter, userId);
     }
 
     @GetMapping("/{gameId}/field")

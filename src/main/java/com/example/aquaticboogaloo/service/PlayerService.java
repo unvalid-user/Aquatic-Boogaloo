@@ -37,6 +37,10 @@ public class PlayerService {
             throw new ResourceAlreadyExistsException(PLAYER, USER + ID, userId);
     }
 
+    public boolean existsByUserAndGame(Long gameId, Long userId) {
+        return playerRepository.existsByUser_IdAndGame_Id(userId, gameId);
+    }
+
     public Player findPlayerByGameIdAndUserId(Long gameId, Long userId) {
         return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
                 .orElseThrow(AccessDeniedException::new);

@@ -9,6 +9,7 @@ import com.example.aquaticboogaloo.dto.response.GameResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.security.CurrentUserId;
+import com.example.aquaticboogaloo.security.CurrentUserView;
 import com.example.aquaticboogaloo.service.GameJoinService;
 import com.example.aquaticboogaloo.service.GameLifecycleService;
 import com.example.aquaticboogaloo.service.GameService;
@@ -17,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -55,9 +57,11 @@ public class GameController {
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
             Pageable pageable,
-            @ModelAttribute GameFilter gameFilter
+            @ModelAttribute GameFilter gameFilter,
+            @AuthenticationPrincipal CurrentUserView currentUser
     ) {
-        return gameService.findAllPaged(pageable, gameFilter);
+        Long userId = currentUser == null ? null : currentUser.getUserId();
+        return gameService.findAllPaged(pageable, gameFilter, userId);
     }
 
     @GetMapping("/{gameId}/players")

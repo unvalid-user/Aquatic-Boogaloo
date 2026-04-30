@@ -46,7 +46,7 @@ public class GameJoinService {
         if (game.getStatus() != GameStatus.NEW)
             throw new BadRequestException(WRONG_GAME_STATE);
 
-        if (game.getPasswordHash() != null && !passwordEncoder.encode(request.getPassword()).equals(game.getPasswordHash()))
+        if (game.getPasswordHash() != null && !passwordMatches(request.getPassword(), game.getPasswordHash()))
             throw new BadRequestException(WRONG_GAME_PASSWORD);
 
         var response = new GameJoinResponse();
@@ -66,5 +66,9 @@ public class GameJoinService {
     public void joinRequestShouldNotExist(Long gameId, Long userId) {
         if (joinRequestRepository.existsByUserIdAndGameId(userId, gameId))
             throw new ResourceAlreadyExistsException(GAME_JOIN_REQUEST, USER + ID, userId);
+    }
+
+    private boolean passwordMatches(String rawPassword, String passwordHash) {
+        return rawPassword != null && passwordEncoder.matches(rawPassword, passwordHash);
     }
 }

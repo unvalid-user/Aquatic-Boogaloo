@@ -16,8 +16,6 @@ import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.GameRepository;
-import com.example.aquaticboogaloo.repository.ScanRepository;
-import com.example.aquaticboogaloo.repository.ShipRepository;
 import com.example.aquaticboogaloo.repository.specification.GameSpecifications;
 import com.example.aquaticboogaloo.util.Point;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +30,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_STATE;
 import static com.example.aquaticboogaloo.util.EntityConst.GAME;
@@ -83,21 +80,25 @@ public class GameService {
         return gameRepository.findGameIdsWithExpiredTurn(Instant.now(), GameStatus.ACTIVE);
     }
 
-    public PagedResponse<GameResponse> findAllPaged(Pageable pageable, GameFilter gameFilter, Long userId) {
+    public PagedResponse<GameResponse> findModeratedGamesPaged(Pageable pageable, GameFilter gameFilter, Long userId) {
         var specs = GameSpecifications.withFilter(gameFilter, userId);
-        return findAllPaged(pageable, specs);
+        return findAllPaged(pageable, specs, null);
     }
-    public PagedResponse<GameResponse> findAllPaged(Pageable pageable, GameFilter gameFilter) {
+    public PagedResponse<GameResponse> findAllPaged(Pageable pageable, GameFilter gameFilter, Long userId) {
         var specs = GameSpecifications.withFilter(gameFilter);
-        return findAllPaged(pageable, specs);
+        return findAllPaged(pageable, specs, userId);
     }
-    private PagedResponse<GameResponse> findAllPaged(Pageable pageable, Specification<Game> specs) {
+    private PagedResponse<GameResponse> findAllPaged(Pageable pageable, Specification<Game> specs, Long userId) {
         Page<Game> gamesPage = gameRepository.findAll(specs, pageable);
         var gamePlayersCounts = playerService.getPlayersCountsByGameIds(gamesPage.map(Game::getId).getContent());
 
         var gameResponsePage = gamesPage.map(game -> {
             GameResponse gameResponse = gameMapper.toResponse(game);
             gameResponse.setPlayersCount(gamePlayersCounts.get(game.getId()));
+
+            if (userId != null) {
+                gameResponse.setJoinedByCurrentUser(playerService.existsByUserAndGame(game.getId(), userId));
+            }
 
             return gameResponse;
         });
