@@ -1,7 +1,7 @@
 package com.example.aquaticboogaloo.controller;
 
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
-import com.example.aquaticboogaloo.dto.response.ActionCreationResponse;
+import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.ActionService;
 import lombok.RequiredArgsConstructor;

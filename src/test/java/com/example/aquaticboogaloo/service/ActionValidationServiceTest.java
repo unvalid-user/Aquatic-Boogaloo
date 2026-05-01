@@ -2,7 +2,7 @@ package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.mapper.ActionMapper;
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
-import com.example.aquaticboogaloo.dto.response.ActionResponse;
+import com.example.aquaticboogaloo.dto.response.action.ActionResponse;
 import com.example.aquaticboogaloo.entity.*;
 import com.example.aquaticboogaloo.entity.enums.ActionType;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;

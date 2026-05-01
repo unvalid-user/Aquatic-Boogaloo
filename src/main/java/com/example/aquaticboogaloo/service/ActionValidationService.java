@@ -2,8 +2,8 @@ package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.mapper.ActionMapper;
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
-import com.example.aquaticboogaloo.dto.response.ActionCreationResponse;
-import com.example.aquaticboogaloo.dto.response.FailedValidationActionResponse;
+import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
+import com.example.aquaticboogaloo.dto.response.action.FailedValidationActionResponse;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.enums.ActionType;
 import com.example.aquaticboogaloo.entity.enums.ShipStatus;

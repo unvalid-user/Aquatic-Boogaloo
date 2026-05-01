@@ -6,6 +6,7 @@ import com.example.aquaticboogaloo.dto.response.GameResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.GameLifecycleService;
+import com.example.aquaticboogaloo.service.GameResponseService;
 import com.example.aquaticboogaloo.service.GameService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/v1/management/games")
 @RequiredArgsConstructor
 public class GameManagementController {
-    private final GameService gameService;
+
     private final GameLifecycleService gameLifecycleService;
+    private final GameResponseService gameResponseService;
 
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
@@ -29,7 +31,7 @@ public class GameManagementController {
             @ModelAttribute GameFilter gameFilter,
             @CurrentUserId Long userId
     ) {
-        return gameService.findModeratedGamesPaged(pageable, gameFilter, userId);
+        return gameResponseService.findModeratedGamesPaged(pageable, gameFilter, userId);
     }
 
     @GetMapping("/{gameId}/field")
@@ -37,7 +39,7 @@ public class GameManagementController {
             @PathVariable Long gameId,
             @CurrentUserId Long userId
     ) {
-        return gameService.buildGameFieldResponseForModeratorView(gameId, userId);
+        return gameResponseService.buildGameFieldResponseForModeratorView(gameId, userId);
     }
 
     @GetMapping("/{gameId}/moderators")

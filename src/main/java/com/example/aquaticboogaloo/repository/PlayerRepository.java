@@ -3,6 +3,8 @@ package com.example.aquaticboogaloo.repository;
 import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -51,4 +53,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     int addPlayerPoints(Long playerId, int amount);
 
     int countByGame_IdAndStatus(Long id, PlayerStatus status);
+
+    Page<Player> findByGame_Id(Long id, Pageable pageable);
+
+    Optional<Player> findByIdAndGame_Id(Long playerId, Long gameId);
 }

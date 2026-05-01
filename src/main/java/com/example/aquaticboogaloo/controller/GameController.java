@@ -12,6 +12,7 @@ import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.security.CurrentUserView;
 import com.example.aquaticboogaloo.service.GameJoinService;
 import com.example.aquaticboogaloo.service.GameLifecycleService;
+import com.example.aquaticboogaloo.service.GameResponseService;
 import com.example.aquaticboogaloo.service.GameService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ public class GameController {
     private final GameService gameService;
     private final GameJoinService gameJoinService;
     private final GameLifecycleService gameLifecycleService;
+    private final GameResponseService gameResponseService;
 
     @PostMapping
     public ResponseEntity<Void> createGame(
@@ -53,7 +55,7 @@ public class GameController {
             @AuthenticationPrincipal CurrentUserView currentUser
     ) {
         Long userId = getCurrentUserId(currentUser);
-        return gameService.buildGameResponseWithPlayersCount(gameId, userId);
+        return gameResponseService.buildGameResponseWithPlayersCount(gameId, userId);
     }
 
     @GetMapping
@@ -63,14 +65,7 @@ public class GameController {
             @AuthenticationPrincipal CurrentUserView currentUser
     ) {
         Long userId = getCurrentUserId(currentUser);
-        return gameService.findAllPaged(pageable, gameFilter, userId);
-    }
-
-    @GetMapping("/{gameId}/players")
-    public void getAllPlayers(
-            @PathVariable Long gameId
-    ) {
-        // TODO
+        return gameResponseService.findAllPaged(pageable, gameFilter, userId);
     }
 
     // TODO: test
@@ -89,7 +84,7 @@ public class GameController {
             @PathVariable Long gameId,
             @CurrentUserId Long userId
     ) {
-        return gameService.buildGameFieldResponseForPlayerView(gameId, userId);
+        return gameResponseService.buildGameFieldResponseForPlayerView(gameId, userId);
     }
 
     private Long getCurrentUserId(CurrentUserView currentUser) {

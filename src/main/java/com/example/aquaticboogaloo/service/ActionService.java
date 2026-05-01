@@ -1,7 +1,7 @@
 package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
-import com.example.aquaticboogaloo.dto.response.ActionCreationResponse;
+import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;

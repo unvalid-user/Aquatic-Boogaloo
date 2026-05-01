@@ -1,4 +1,4 @@
-package com.example.aquaticboogaloo.dto.response;
+package com.example.aquaticboogaloo.dto.response.action;
 
 
 import lombok.Getter;
