@@ -1,12 +1,12 @@
 package com.example.aquaticboogaloo.entity;
 
+import com.example.aquaticboogaloo.entity.enums.JoinRequestStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// TODO: name conflict 'request'
 
 @Entity
 @Table(name = "games_join_requests")
@@ -25,4 +25,11 @@ public class GameJoinRequest {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
+
+    @Enumerated(EnumType.STRING)
+    private JoinRequestStatus status = JoinRequestStatus.PENDING;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rejected_by_user_id")
+    private User rejectedBy;
 }

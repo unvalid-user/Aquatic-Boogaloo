@@ -50,7 +50,7 @@ public class GameJoinService {
             throw new BadRequestException(WRONG_GAME_PASSWORD);
 
         var response = new GameJoinResponse();
-        if (game.isRequestToJoin()) {
+        if (!gameService.isUserGameModerator(gameId, userId) && game.isRequestToJoin()) {
             GameJoinRequest gameJoinRequest = createJoinRequest(game, user);
             response.setResult(GameJoinResponse.JoinGameResult.PENDING_APPROVAL);
             response.setJoinRequestId(gameJoinRequest.getId());

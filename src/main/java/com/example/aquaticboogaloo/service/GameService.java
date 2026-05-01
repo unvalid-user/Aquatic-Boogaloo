@@ -74,6 +74,11 @@ public class GameService {
                 .orElseThrow(AccessDeniedException::new);
     }
 
+    public boolean isUserGameModerator(Long gameId, Long userId) {
+        return gameRepository.findGameByIdAndHostIdOrModeratorId(gameId, userId)
+                .isPresent();
+    }
+
     public List<Long> getGameIdsWithExpiredTurn() {
         return gameRepository.findGameIdsWithExpiredTurn(Instant.now(), GameStatus.ACTIVE);
     }
