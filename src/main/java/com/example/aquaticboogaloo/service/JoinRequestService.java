@@ -1,21 +1,23 @@
 package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.PagedResponse;
+import com.example.aquaticboogaloo.dto.filter.JoinRequestFilter;
 import com.example.aquaticboogaloo.dto.mapper.JoinRequestMapper;
 import com.example.aquaticboogaloo.dto.response.JoinRequestResponse;
 import com.example.aquaticboogaloo.entity.*;
+import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.entity.enums.JoinRequestStatus;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ConflictException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.GameJoinRequestRepository;
+import com.example.aquaticboogaloo.repository.specification.JoinRequestSpecifications;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import static com.example.aquaticboogaloo.exception.ExceptionMessage.FAILED_JOIN_REQUEST_UPDATE;
-import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_JOIN_REQUEST_STATUS;
+import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 import static com.example.aquaticboogaloo.util.EntityConst.ID;
 
 @Service
@@ -29,18 +31,29 @@ public class JoinRequestService {
     private final PlayerService playerService;
 
 
-    public PagedResponse<JoinRequestResponse> findAllPaged(Pageable pageable, Long gameId, Long userId) {
-        gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
+    public PagedResponse<JoinRequestResponse> findAllPaged(Pageable pageable, JoinRequestFilter filter, Long userId) {
+        gameService.findGameByIdAndHostIdOrModeratorId(filter.gameId(), userId);
 
-        var joinRequestsPaged = joinRequestRepository.findByGame_Id(gameId, pageable);
+        var spec = JoinRequestSpecifications.withFilter(filter);
 
-        return PagedResponse.from(joinRequestsPaged.map(joinRequestMapper::toResponse));
+        var joinRequestsPage = joinRequestRepository.findAll(spec, pageable);
+
+        return PagedResponse.from(joinRequestsPage.map(joinRequestMapper::toResponse));
+    }
+
+    public JoinRequestResponse getById(Long userId, Long joinRequestId) {
+        GameJoinRequest joinRequest = findById(joinRequestId);
+        gameService.findGameByIdAndHostIdOrModeratorId(joinRequest.getGame().getId(), userId);
+
+        return joinRequestMapper.toResponse(joinRequest);
     }
 
     @Transactional
-    public void approveJoinRequest(Long joinRequestId, Long gameId, Long userId) {
-        Game game = gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
-        GameJoinRequest joinRequest = findJoinRequestByIdAndGameIdForUpdate(joinRequestId, gameId);
+    public void approveJoinRequest(Long joinRequestId, Long userId) {
+        GameJoinRequest joinRequest = findByIdForUpdate(joinRequestId);
+        Game game = gameService.findGameByIdAndHostIdOrModeratorId(joinRequest.getGame().getId(), userId);
+
+        if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
 
         Player player = playerService.createPlayer(game, joinRequest.getUser());
 
@@ -48,9 +61,9 @@ public class JoinRequestService {
     }
 
     @Transactional
-    public void rejectJoinRequest(Long joinRequestId, Long gameId, Long userId) {
-        gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
-        GameJoinRequest joinRequest = findJoinRequestByIdAndGameIdForUpdate(joinRequestId, gameId);
+    public void rejectJoinRequest(Long joinRequestId, Long userId) {
+        GameJoinRequest joinRequest = findByIdForUpdate(joinRequestId);
+        gameService.findGameByIdAndHostIdOrModeratorId(joinRequest.getGame().getId(), userId);
 
         if (joinRequest.getStatus() != JoinRequestStatus.PENDING)
             throw new BadRequestException(WRONG_JOIN_REQUEST_STATUS);
@@ -68,20 +81,13 @@ public class JoinRequestService {
         if (rows < 1) throw new ConflictException(FAILED_JOIN_REQUEST_UPDATE);
     }
 
-    public JoinRequestResponse getById(Long gameId, Long userId, Long joinRequestId) {
-        gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
-        GameJoinRequest joinRequest = findJoinRequestByIdAndGameId(joinRequestId, gameId);
-
-        return joinRequestMapper.toResponse(joinRequest);
-    }
-
-    private GameJoinRequest findJoinRequestByIdAndGameId(Long joinRequestId, Long gameId) {
-        return joinRequestRepository.findByIdAndGame_Id(joinRequestId, gameId)
+    private GameJoinRequest findById(Long joinRequestId) {
+        return joinRequestRepository.findById(joinRequestId)
                 .orElseThrow(() -> new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
     }
 
-    private GameJoinRequest findJoinRequestByIdAndGameIdForUpdate(Long joinRequestId, Long gameId) {
-        return joinRequestRepository.findByIdAndGameIdForUpdate(joinRequestId, gameId)
+    private GameJoinRequest findByIdForUpdate(Long joinRequestId) {
+        return joinRequestRepository.findByIdForUpdate(joinRequestId)
                 .orElseThrow(() -> new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
     }
 

@@ -14,14 +14,9 @@ import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
-import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.INSUFFICIENT_ENERGY;
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_STATE;
@@ -35,6 +30,8 @@ public class PlayerService {
     private final GameService gameService;
 
     public Player createPlayer(Game game, User user) {
+        // TODO: lock game?
+
         Player player = new Player();
         player.setGame(game);
         player.setUser(user);

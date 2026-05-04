@@ -31,11 +31,7 @@ public class GameSpecifications {
     }
 
     private static Specification<Game> withHostId(Long userId) {
-        return (root, query, cb) -> {
-            if (userId == null) return null;
-
-            return cb.equal(root.get(Game_.hostUser).get(User_.id), userId);
-        };
+        return SpecificationUtils.equalIfPresent(Game_.hostUser, User_.id, userId);
     }
 
     private static Specification<Game> withTitleContains(String value) {
