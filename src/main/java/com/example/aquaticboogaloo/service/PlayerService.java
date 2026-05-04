@@ -1,6 +1,7 @@
 package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.PagedResponse;
+import com.example.aquaticboogaloo.dto.filter.PlayerFilter;
 import com.example.aquaticboogaloo.dto.mapper.PlayerMapper;
 import com.example.aquaticboogaloo.dto.response.PlayerResponse;
 import com.example.aquaticboogaloo.entity.Game;
@@ -14,6 +15,7 @@ import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
+import com.example.aquaticboogaloo.repository.specification.PlayerSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,25 +41,34 @@ public class PlayerService {
         return playerRepository.save(player);
     }
 
-    public PagedResponse<PlayerResponse> getAllPaged(Long gameId, Pageable pageable) {
-        var playersPage = playerRepository.findByGame_Id(gameId, pageable);
+    public PagedResponse<PlayerResponse> getAllPaged(PlayerFilter filter, Pageable pageable) {
+        var spec = PlayerSpecifications.withFilter(filter);
+
+        var playersPage = playerRepository.findAll(spec, pageable);
 
         return PagedResponse.from(playersPage.map(playerMapper::toResponse));
     }
 
-    public PlayerResponse getById(Long gameId, Long playerId) {
-        Player player = findPlayerByIdAndGameId(gameId, playerId);
+    public PlayerResponse getById(Long playerId) {
+        Player player = findPlayerById(playerId);
 
         return playerMapper.toResponse(player);
     }
 
-    public void deletePlayer(Long gameId, Long playerId, Long userId) {
-        Game game = gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
+    // TODO: race condition (Game status)
+    public void deletePlayer(Long playerId, Long userId) {
+        Player player = findPlayerById(playerId);
+        Game game = gameService.findGameByIdAndHostIdOrModeratorId(player.getGame().getId(), userId);
+
         if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
 
-        Player player = findPlayerByIdAndGameId(playerId, gameId);
-
         playerRepository.delete(player);
+    }
+
+
+    public Player findPlayerById(Long playerId) {
+        return playerRepository.findById(playerId)
+                .orElseThrow(() -> new ResourceNotFoundException(Player_.class_.getName(), ID, playerId));
     }
 
     public void playerShouldNotExist(Long gameId, Long userId) {

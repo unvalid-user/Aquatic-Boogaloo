@@ -5,6 +5,7 @@ import com.example.aquaticboogaloo.dto.filter.JoinRequestFilter;
 import com.example.aquaticboogaloo.dto.response.JoinRequestResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.JoinRequestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class JoinRequestManagementController {
     @GetMapping
     public PagedResponse<JoinRequestResponse> getAllPaged(
             Pageable pageable,
-            @ModelAttribute JoinRequestFilter filter,
+            @Valid @ModelAttribute JoinRequestFilter filter,
             @CurrentUserId Long userId
     ) {
         return joinRequestService.findAllPaged(pageable, filter, userId);
