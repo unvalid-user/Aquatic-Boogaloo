@@ -63,7 +63,7 @@ public class FieldObjectMapperTest {
         scan.setMinesNumber(5);
         scan.setShipCellsNumber(3);
         scan.setExpirationTurn(6);
-        scan.setAction(action(ActionType.SCAN, 5, 5, 5));
+        scan.setAction(action(ActionType.PLACE_SCAN, 5, 5, 5));
         buildPlayerWithUser().addAction(scan.getAction());
         scan.getAction().setId(randomLong());
         scan.getAction().setStatus(ActionStatus.COMPLETED);

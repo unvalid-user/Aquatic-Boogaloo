@@ -1,6 +1,5 @@
 package com.example.aquaticboogaloo.service;
 
-import ch.qos.logback.classic.encoder.JsonEncoder;
 import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
 import com.example.aquaticboogaloo.entity.*;
 import com.example.aquaticboogaloo.entity.enums.*;
@@ -233,7 +232,7 @@ public class GameLifecycleService {
             case FREE_ATTACK -> actionType = ActionType.ATTACK;
             case FREE_SHIELD -> actionType = ActionType.PLACE_SHIELD;
             case FREE_MINE -> actionType = ActionType.PLACE_MINE;
-            case FREE_SCAN -> actionType = ActionType.SCAN;
+            case FREE_SCAN -> actionType = ActionType.PLACE_SCAN;
         }
         if (actionType == null) return;
 

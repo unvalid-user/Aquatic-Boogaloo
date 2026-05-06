@@ -16,6 +16,8 @@ import java.util.List;
 public class GameActionController {
     private final ActionService actionService;
 
+    // TODO: GET all paged+filter
+
     @PostMapping
     public ActionCreationResponse createActions(
             @PathVariable Long gameId,

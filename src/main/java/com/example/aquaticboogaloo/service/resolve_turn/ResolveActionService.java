@@ -32,7 +32,7 @@ public class ResolveActionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void resolveScanActions(Game game) {
-        List<Action> scanActions = getActionsForResolving(game, ActionType.SCAN);
+        List<Action> scanActions = getActionsForResolving(game, ActionType.PLACE_SCAN);
 
         List<Scan> scans = new ArrayList<>();
         scanActions.forEach(action -> {
@@ -242,7 +242,7 @@ public class ResolveActionService {
         actions.forEach(action -> {
             Attack attack = new Attack();
             attack.setAction(action);
-            attack.setStatus(AttackStatus.MINE_HIT);
+            attack.setStatus(AttackStatus.HIT);
 
             AttackHit attackHit = new AttackHit();
             attackHit.setAttack(attack);
@@ -288,7 +288,7 @@ public class ResolveActionService {
         actions.forEach(action -> {
             Attack attack = new Attack();
             attack.setAction(action);
-            attack.setStatus(AttackStatus.SHIP_HIT);
+            attack.setStatus(AttackStatus.HIT);
 
             AttackHit attackHit = new AttackHit();
             attackHit.setAttack(attack);
@@ -321,7 +321,7 @@ public class ResolveActionService {
         actions.forEach(action -> {
             Attack attack = new Attack();
             attack.setAction(action);
-            attack.setStatus(AttackStatus.BLOCKED);
+            attack.setStatus(AttackStatus.HIT);
 
             shields.forEach(shield -> {
                 AttackHit attackHit = new AttackHit();

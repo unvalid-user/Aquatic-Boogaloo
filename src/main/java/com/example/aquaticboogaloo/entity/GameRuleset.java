@@ -117,7 +117,7 @@ public class GameRuleset {
             case ATTACK -> getAttackEnergyCost();
             case PLACE_SHIELD -> getShieldEnergyCost();
             case PLACE_MINE -> getMineEnergyCost();
-            case SCAN -> getScanEnergyCost();
+            case PLACE_SCAN -> getScanEnergyCost();
         };
     }
 }

@@ -50,7 +50,7 @@ public class ActionValidationServiceTest {
         actionRequestList.add(new ActionRequest(9, 9, ActionType.ATTACK));
         actionRequestList.add(new ActionRequest(2, 2, ActionType.PLACE_SHIELD));
         actionRequestList.add(new ActionRequest(1, 1, ActionType.PLACE_MINE));
-        actionRequestList.add(new ActionRequest(4, 4, ActionType.SCAN));
+        actionRequestList.add(new ActionRequest(4, 4, ActionType.PLACE_SCAN));
 
         doAnswer(inv -> {
             int amount = inv.getArgument(1);
@@ -110,9 +110,9 @@ public class ActionValidationServiceTest {
         actionRequestList.add(new ActionRequest(11, -1, ActionType.PLACE_SHIELD));
         actionRequestList.add(new ActionRequest(2, 3, ActionType.PLACE_MINE));
         actionRequestList.add(new ActionRequest(10, 10, ActionType.PLACE_MINE));
-        actionRequestList.add(new ActionRequest(2, 4, ActionType.SCAN));
+        actionRequestList.add(new ActionRequest(2, 4, ActionType.PLACE_SCAN));
         actionRequestList.add(new ActionRequest(2, 4, null));
-        actionRequestList.add(new ActionRequest(null, null, ActionType.SCAN));
+        actionRequestList.add(new ActionRequest(null, null, ActionType.PLACE_SCAN));
 
         doAnswer(inv -> {
             int amount = inv.getArgument(1);
@@ -157,7 +157,7 @@ public class ActionValidationServiceTest {
         actionRequestList.add(new ActionRequest(9, 9, ActionType.ATTACK));
         actionRequestList.add(new ActionRequest(2, 2, ActionType.PLACE_SHIELD));
         actionRequestList.add(new ActionRequest(1, 1, ActionType.PLACE_MINE));
-        actionRequestList.add(new ActionRequest(4, 4, ActionType.SCAN));
+        actionRequestList.add(new ActionRequest(4, 4, ActionType.PLACE_SCAN));
 
         doAnswer(inv -> {
             int amount = inv.getArgument(1);
@@ -222,7 +222,7 @@ public class ActionValidationServiceTest {
 
         BonusAction bonusAction = new BonusAction();
         bonusAction.setId(1L);
-        bonusAction.setType(ActionType.SCAN);
+        bonusAction.setType(ActionType.PLACE_SCAN);
         bonusAction.setQuantity(1);
 
         User user = new User();

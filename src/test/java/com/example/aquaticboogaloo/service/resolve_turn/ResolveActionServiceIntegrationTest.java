@@ -1,6 +1,5 @@
 package com.example.aquaticboogaloo.service.resolve_turn;
 
-import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.GameRuleset;
 import com.example.aquaticboogaloo.entity.Player;
@@ -11,9 +10,7 @@ import com.example.aquaticboogaloo.entity.enums.AttackHitImpact;
 import com.example.aquaticboogaloo.entity.enums.AttackStatus;
 import com.example.aquaticboogaloo.entity.enums.FieldObjectType;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
-import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.entity.enums.ShipStatus;
-import com.example.aquaticboogaloo.entity.enums.ShipType;
 import com.example.aquaticboogaloo.entity.field_objects.*;
 import com.example.aquaticboogaloo.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -128,7 +125,7 @@ class ResolveActionServiceIntegrationTest {
     @Test
     void resolveScanAction_shouldPlaceScanSuccessfully() {
         var context = createGame();
-        context.attacker.addAction(action(ActionType.SCAN, 4, 5, context.game.getCurrentTurn()));
+        context.attacker.addAction(action(ActionType.PLACE_SCAN, 4, 5, context.game.getCurrentTurn()));
         context.defender.addShip(shipWithTwoCells(4, 5));
         Mine mine = mine(5, 6, context.game.getCurrentTurn()-1);
         mine.setGame(context.game);
@@ -168,7 +165,7 @@ class ResolveActionServiceIntegrationTest {
         var attacks = attackRepository.findAll();
         assertThat(attacks).hasSize(1);
         var attack = attacks.getFirst();
-        assertThat(attack.getStatus()).isEqualTo(AttackStatus.SHIP_HIT);
+        assertThat(attack.getStatus()).isEqualTo(AttackStatus.HIT);
 
         var hits = attackHitRepository.findAll();
         assertThat(hits).hasSize(1);
@@ -209,7 +206,7 @@ class ResolveActionServiceIntegrationTest {
         var attacks = attackRepository.findAll();
         assertThat(attacks).hasSize(1);
         var attack = attacks.getFirst();
-        assertThat(attack.getStatus()).isEqualTo(AttackStatus.MINE_HIT);
+        assertThat(attack.getStatus()).isEqualTo(AttackStatus.HIT);
 
         var hits = attackHitRepository.findAll();
         assertThat(hits).hasSize(1);
@@ -251,7 +248,7 @@ class ResolveActionServiceIntegrationTest {
         var attacks = attackRepository.findAll();
         assertThat(attacks).hasSize(1);
         var attack = attacks.getFirst();
-        assertThat(attack.getStatus()).isEqualTo(AttackStatus.BLOCKED);
+        assertThat(attack.getStatus()).isEqualTo(AttackStatus.HIT);
 
         var hits = attackHitRepository.findAll();
         assertThat(hits).hasSize(1);
@@ -289,7 +286,7 @@ class ResolveActionServiceIntegrationTest {
         var attacks = attackRepository.findAll();
         assertThat(attacks).hasSize(1);
         var attack = attacks.getFirst();
-        assertThat(attack.getStatus()).isEqualTo(AttackStatus.SHIP_HIT);
+        assertThat(attack.getStatus()).isEqualTo(AttackStatus.HIT);
 
         var hits = attackHitRepository.findAll();
         assertThat(hits).hasSize(1);

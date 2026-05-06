@@ -6,14 +6,13 @@ import com.example.aquaticboogaloo.dto.request.CreateGameJoinRequest;
 import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
 import com.example.aquaticboogaloo.dto.response.GameJoinResponse;
 import com.example.aquaticboogaloo.dto.response.GameResponse;
+import com.example.aquaticboogaloo.dto.response.KnownCellResponse;
+import com.example.aquaticboogaloo.dto.response.action.TurnResultResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.security.CurrentUserView;
-import com.example.aquaticboogaloo.service.GameJoinService;
-import com.example.aquaticboogaloo.service.GameLifecycleService;
-import com.example.aquaticboogaloo.service.GameResponseService;
-import com.example.aquaticboogaloo.service.GameService;
+import com.example.aquaticboogaloo.service.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @Tag(
         name = "Game controller for player view"
@@ -36,6 +36,8 @@ public class GameController {
     private final GameJoinService gameJoinService;
     private final GameLifecycleService gameLifecycleService;
     private final GameResponseService gameResponseService;
+    private final AttackService attackHitService;
+    private final TurnResultService turnResultService;
 
     @PostMapping
     public ResponseEntity<Void> createGame(
@@ -86,6 +88,25 @@ public class GameController {
     ) {
         return gameResponseService.buildGameFieldResponseForPlayerView(gameId, userId);
     }
+
+
+    @GetMapping("/{gameId}/turn-result")
+    public TurnResultResponse getGameEvents(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId,
+            @RequestParam Integer turn
+    ) {
+        return turnResultService.getTurnResults(gameId, userId, turn);
+    }
+
+    @GetMapping("/{gameId}/known-cells")
+    public List<KnownCellResponse> getKnownCells(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        return attackHitService.getKnownCells(gameId, userId);
+    }
+
 
     private Long getCurrentUserId(CurrentUserView currentUser) {
         return currentUser == null ? null : currentUser.getUserId();

@@ -1,6 +1,7 @@
 package com.example.aquaticboogaloo.entity.field_objects;
 
 import com.example.aquaticboogaloo.entity.Action;
+import com.example.aquaticboogaloo.entity.AttackHit;
 import com.example.aquaticboogaloo.entity.enums.AttackStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,6 +21,9 @@ public class Attack implements ActionObject {
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "action_id", nullable = false)
     private Action action;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    private AttackHit hit;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

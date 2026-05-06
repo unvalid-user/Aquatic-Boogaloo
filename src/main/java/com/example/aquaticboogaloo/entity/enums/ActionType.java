@@ -4,5 +4,5 @@ public enum ActionType {
     ATTACK,
     PLACE_SHIELD,
     PLACE_MINE,
-    SCAN
+    PLACE_SCAN
 }

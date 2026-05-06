@@ -128,7 +128,7 @@ public class ActionValidationService {
         response.addAllCauses(
                 switch (actionRequest.type()) {
                     case ATTACK -> attackPlacementValidation(actionRequest.locationX(), actionRequest.locationY(), player);
-                    case SCAN -> scanPlacementValidation(actionRequest.locationX(), actionRequest.locationY(), player);
+                    case PLACE_SCAN -> scanPlacementValidation(actionRequest.locationX(), actionRequest.locationY(), player);
                     case PLACE_SHIELD -> shieldPlacementValidation(actionRequest.locationX(), actionRequest.locationY(), player);
                     case PLACE_MINE -> minePlacementValidation(actionRequest.locationX(), actionRequest.locationY(), player);
                     // TODO: log

@@ -2,6 +2,7 @@ package com.example.aquaticboogaloo.service;
 
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
 import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
+import com.example.aquaticboogaloo.dto.response.action.AttackResponse;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
@@ -86,9 +87,17 @@ public class ActionService {
         return player;
     }
 
-    private Action findActionById(Long actionId) {
+    public Action findActionById(Long actionId) {
         return actionRepository.findById(actionId).orElseThrow(() ->
                 new ResourceNotFoundException(ACTION, ID, actionId));
+    }
+
+    public List<Action> findActionByPlayerId(Long playerId) {
+        return actionRepository.findByActor_Id(playerId);
+    }
+
+    public List<Action> getActionsByPlayerIdAndTurn(Long playerId, int turn) {
+        return actionRepository.findByActor_IdAndCreatedAtTurn(playerId, turn);
     }
 
     @Transactional
