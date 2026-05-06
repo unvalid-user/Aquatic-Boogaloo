@@ -91,10 +91,10 @@ public class GameController {
 
 
     @GetMapping("/{gameId}/turn-result")
-    public TurnResultResponse getGameEvents(
+    public TurnResultResponse getTurnResults(
             @PathVariable Long gameId,
             @CurrentUserId Long userId,
-            @RequestParam Integer turn
+            @RequestParam(required = false) Integer turn
     ) {
         return turnResultService.getTurnResults(gameId, userId, turn);
     }

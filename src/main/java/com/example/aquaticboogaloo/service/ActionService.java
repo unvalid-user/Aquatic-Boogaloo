@@ -1,9 +1,12 @@
 package com.example.aquaticboogaloo.service;
 
+import com.example.aquaticboogaloo.dto.mapper.ActionMapper;
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
 import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
+import com.example.aquaticboogaloo.dto.response.action.ActionResponse;
 import com.example.aquaticboogaloo.dto.response.action.AttackResponse;
 import com.example.aquaticboogaloo.entity.Action;
+import com.example.aquaticboogaloo.entity.BonusAction;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.enums.ActionStatus;
@@ -21,7 +24,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 import static com.example.aquaticboogaloo.util.EntityConst.ACTION;
@@ -34,6 +39,7 @@ public class ActionService {
     private final ActionValidationService actionValidationService;
     private final ActionRepository actionRepository;
     private final BonusActionService bonusActionService;
+    private final ActionMapper actionMapper;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -115,5 +121,26 @@ public class ActionService {
         player.setStatus(PlayerStatus.COMMITED_ACTIONS);
 
         if (player.getGame().isForceNextTurn()) eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
+    }
+
+    public List<ActionResponse> getPlannedActions(Long gameId, Long userId) {
+        Player player = getPlayerAndValidate(gameId, userId);
+
+        return actionRepository.findByActor_IdAndCreatedAtTurnAndStatus(
+                    player.getId(),
+                    player.getGame().getCurrentTurn(),
+                    ActionStatus.PLANNED
+                ).stream()
+                .map(actionMapper::toResponse)
+                .toList();
+    }
+
+    public Map<ActionType, Integer> getBonusActions(Long gameId, Long userId) {
+        Player player = getPlayerAndValidate(gameId, userId);
+
+        return bonusActionService.findBonusActionsByPlayerId(player.getId())
+                .stream()
+                .filter(ba -> ba.getQuantity() > 0)
+                .collect(Collectors.groupingBy(BonusAction::getType, Collectors.summingInt(BonusAction::getQuantity)));
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface BonusActionRepository extends JpaRepository<BonusAction, Long> {
     @Modifying
@@ -27,4 +29,6 @@ public interface BonusActionRepository extends JpaRepository<BonusAction, Long> 
         AND b.type = :actionType
     """)
     int addBonus(Long playerId, ActionType actionType, int amount);
+
+    List<BonusAction> findByPlayer_Id(Long id);
 }

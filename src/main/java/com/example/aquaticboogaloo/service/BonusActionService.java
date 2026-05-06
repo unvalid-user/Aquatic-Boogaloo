@@ -1,10 +1,13 @@
 package com.example.aquaticboogaloo.service;
 
+import com.example.aquaticboogaloo.entity.BonusAction;
 import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.enums.ActionType;
 import com.example.aquaticboogaloo.repository.BonusActionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,5 +28,9 @@ public class BonusActionService {
         int rows = bonusActionRepository.addBonus(player.getId(), actionType, 1);
 
         return rows > 0;
+    }
+
+    public List<BonusAction> findBonusActionsByPlayerId(Long playerId) {
+        return bonusActionRepository.findByPlayer_Id(playerId);
     }
 }

@@ -52,6 +52,7 @@ public class ActionValidationService {
         );
         actions.addAll(player.getActions());
 
+        int energyCostSum = 0;
         for (ActionRequest actionRequest : actionRequests) {
             var failedValidation = validateActionRequest(actionRequest, player);
             if (failedValidation != null) {
@@ -82,8 +83,9 @@ public class ActionValidationService {
                             ? null
                             : game.getRuleset().getEnergyCost(actionRequest.type())
             );
+            energyCostSum += action.getEnergyCost() == null ? 0 : action.getEnergyCost();
 
-            // save Action
+                    // save Action
             // might be duplications in concurrency
             // TODO: create unique index on action
             //  or unique constraint
@@ -91,12 +93,6 @@ public class ActionValidationService {
             response.add(actionMapper.toResponse(action));
         }
 
-        int energyCostSum = actions.stream()
-                .mapToInt(action -> {
-                    Integer energyCost = action.getEnergyCost();
-                    return energyCost == null ? 0 : energyCost;
-                })
-                .sum();
 
         playerService.subtractPlayerEnergy(player.getId(), energyCostSum);
 
