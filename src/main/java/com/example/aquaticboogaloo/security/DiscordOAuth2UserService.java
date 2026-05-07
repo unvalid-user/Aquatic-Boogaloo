@@ -52,6 +52,6 @@ public class DiscordOAuth2UserService implements OAuth2UserService<OAuth2UserReq
         Set<GrantedAuthority> authorities = new HashSet<>(oauth2User.getAuthorities());
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 
-        return new OAuth2UserPrincipal(user.getId(), authorities, attributes, "id");
+        return new OAuth2UserPrincipal(user, authorities, attributes, "id");
     }
 }

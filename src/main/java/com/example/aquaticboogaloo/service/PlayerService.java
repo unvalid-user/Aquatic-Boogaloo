@@ -10,18 +10,15 @@ import com.example.aquaticboogaloo.entity.Player_;
 import com.example.aquaticboogaloo.entity.User;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
-import com.example.aquaticboogaloo.exception.AccessDeniedException;
-import com.example.aquaticboogaloo.exception.BadRequestException;
-import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
-import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
+import com.example.aquaticboogaloo.exception.*;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
 import com.example.aquaticboogaloo.repository.specification.PlayerSpecifications;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import static com.example.aquaticboogaloo.exception.ExceptionMessage.INSUFFICIENT_ENERGY;
-import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_STATE;
+import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 import static com.example.aquaticboogaloo.util.EntityConst.*;
 
 @Service
@@ -55,14 +52,18 @@ public class PlayerService {
         return playerMapper.toResponse(player);
     }
 
-    // TODO: race condition (Game status)
+    public PlayerResponse getByGameIdAndUserId(Long gameId, Long userId) {
+        return playerMapper.toResponse(findPlayerByGameIdAndUserId(gameId, userId));
+    }
+
+    @Transactional
     public void deletePlayer(Long playerId, Long userId) {
         Player player = findPlayerById(playerId);
         Game game = gameService.findGameByIdAndHostIdOrModeratorId(player.getGame().getId(), userId);
 
         if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
 
-        playerRepository.delete(player);
+        removePlayerById(playerId);
     }
 
 
@@ -82,6 +83,7 @@ public class PlayerService {
 
     public Player findPlayerByGameIdAndUserId(Long gameId, Long userId) {
         return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
+                // TODO: 404
                 .orElseThrow(AccessDeniedException::new);
     }
 
@@ -99,11 +101,17 @@ public class PlayerService {
     public void addPlayerEnergy(Long playerId, int energyAmount) {
         int rows = playerRepository.addPlayerEnergy(playerId, energyAmount);
 
-        // TODO: if (rows < 1)?
+        if (rows < 1) throw new ConflictException(FAILED_UPDATE_PLAYER.formatted(playerId));
     }
 
     public int countPlanningPlayersByGameId(Long gameId) {
         return playerRepository.countByGame_IdAndStatus(gameId, PlayerStatus.PLANNING);
+    }
+
+    public void removePlayerById(Long playerId) {
+        int rows = playerRepository.deleteByIdAndGameStatus(playerId, GameStatus.NEW);
+
+        if (rows < 1) throw new ConflictException(FAILED_REMOVE_PLAYER.formatted(playerId));
     }
 }
 

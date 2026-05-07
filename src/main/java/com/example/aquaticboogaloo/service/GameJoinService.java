@@ -10,6 +10,7 @@ import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceAlreadyExistsException;
 import com.example.aquaticboogaloo.repository.GameJoinRequestRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -70,5 +71,15 @@ public class GameJoinService {
 
     private boolean passwordMatches(String rawPassword, String passwordHash) {
         return rawPassword != null && passwordEncoder.matches(rawPassword, passwordHash);
+    }
+
+    @Transactional
+    public void leaveGame(Long gameId, Long userId) {
+        Player player = playerService.findPlayerByGameIdAndUserId(gameId, userId);
+
+        if (player.getGame().getStatus() != GameStatus.NEW)
+            throw new BadRequestException(WRONG_GAME_STATE);
+
+        playerService.removePlayerById(player.getId());
     }
 }

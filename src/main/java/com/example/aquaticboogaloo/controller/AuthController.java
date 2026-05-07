@@ -1,5 +1,9 @@
 package com.example.aquaticboogaloo.controller;
 
+import com.example.aquaticboogaloo.dto.mapper.UserMapper;
+import com.example.aquaticboogaloo.dto.response.UserResponse;
+import com.example.aquaticboogaloo.security.OAuth2UserPrincipal;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class AuthController {
 
+    private final UserMapper userMapper;
+
+
     @GetMapping("/me")
-    public Map<String, Object> me(@AuthenticationPrincipal OAuth2User principal) {
-        return principal.getAttributes();
+    public UserResponse me(
+            @AuthenticationPrincipal OAuth2UserPrincipal principal
+    ) {
+        return userMapper.toResponse(principal.getUser());
     }
 }

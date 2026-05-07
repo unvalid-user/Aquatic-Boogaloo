@@ -19,8 +19,16 @@ public class PlayersController {
     public PagedResponse<PlayerResponse> getAllPlayers(
             Pageable pageable,
             @ModelAttribute PlayerFilter filter
-            ) {
+    ) {
         return playerService.getAllPaged(filter, pageable);
+    }
+
+    @GetMapping("/me")
+    public PlayerResponse getCurrentPlayer(
+            @RequestParam Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        return playerService.getByGameIdAndUserId(gameId, userId);
     }
 
     @GetMapping("/{playerId}")

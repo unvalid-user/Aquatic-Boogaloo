@@ -11,7 +11,16 @@ public class PlayerSpecifications {
 
         return Specification.allOf(
                 withGameId(filter.gameId()),
+                withUserId(filter.userId()),
                 withStatus(filter.status())
+        );
+    }
+
+    private static Specification<Player> withUserId(Long userId) {
+        return SpecificationUtils.equalIfPresent(
+                Player_.user,
+                User_.id,
+                userId
         );
     }
 

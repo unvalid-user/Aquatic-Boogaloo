@@ -7,6 +7,7 @@ import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
 import com.example.aquaticboogaloo.dto.response.GameJoinResponse;
 import com.example.aquaticboogaloo.dto.response.GameResponse;
 import com.example.aquaticboogaloo.dto.response.KnownCellResponse;
+import com.example.aquaticboogaloo.dto.response.PlayerResponse;
 import com.example.aquaticboogaloo.dto.response.action.TurnResultResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.Game;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +34,7 @@ import java.util.List;
 @RequestMapping("api/v1/games")
 @RequiredArgsConstructor
 public class GameController {
-    private final GameService gameService;
+
     private final GameJoinService gameJoinService;
     private final GameLifecycleService gameLifecycleService;
     private final GameResponseService gameResponseService;
@@ -49,7 +51,6 @@ public class GameController {
                 .created(buildUri(game.getId()))
                 .build();
     }
-
 
     @GetMapping("/{gameId}")
     public GameResponse getGameById(
@@ -70,7 +71,6 @@ public class GameController {
         return gameResponseService.findAllPaged(pageable, gameFilter, userId);
     }
 
-    // TODO: test
     @PostMapping("/{gameId}/join")
     public GameJoinResponse joinGame(
             @PathVariable Long gameId,
@@ -78,6 +78,15 @@ public class GameController {
             @CurrentUserId Long userId
     ) {
         return gameJoinService.joinGame(joinRequest, gameId, userId);
+    }
+
+    @DeleteMapping("/{gameId}/leave")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveGame(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        gameJoinService.leaveGame(gameId, userId);
     }
 
     // only current player's objects

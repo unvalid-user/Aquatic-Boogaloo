@@ -1,28 +1,13 @@
 package com.example.aquaticboogaloo.service;
 
-import com.example.aquaticboogaloo.dto.PagedResponse;
-import com.example.aquaticboogaloo.dto.filter.GameFilter;
-import com.example.aquaticboogaloo.dto.mapper.GameMapper;
-import com.example.aquaticboogaloo.dto.mapper.field_object.FieldObjectMapper;
-import com.example.aquaticboogaloo.dto.response.GameResponse;
-import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.*;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
-import com.example.aquaticboogaloo.entity.enums.ShipStatus;
-import com.example.aquaticboogaloo.entity.field_objects.Mine;
-import com.example.aquaticboogaloo.entity.field_objects.Scan;
-import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.GameRepository;
 import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
-import com.example.aquaticboogaloo.repository.specification.GameSpecifications;
-import com.example.aquaticboogaloo.util.Point;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 

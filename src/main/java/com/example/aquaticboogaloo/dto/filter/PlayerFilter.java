@@ -4,6 +4,7 @@ import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 
 public record PlayerFilter(
     Long gameId,
+    Long userId,
     PlayerStatus status
 ) {
 }
