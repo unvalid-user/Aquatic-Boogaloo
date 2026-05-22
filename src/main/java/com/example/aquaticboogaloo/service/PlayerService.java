@@ -83,8 +83,7 @@ public class PlayerService {
 
     public Player findPlayerByGameIdAndUserId(Long gameId, Long userId) {
         return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
-                // TODO: 404
-                .orElseThrow(AccessDeniedException::new);
+                .orElseThrow(() -> new ResourceNotFoundException(Player_.class_.getName(), USER + ID, userId));
     }
 
     public Player findPlayerByIdAndGameId(Long gameId, Long playerId) {

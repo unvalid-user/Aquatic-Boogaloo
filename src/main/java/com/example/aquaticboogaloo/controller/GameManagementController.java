@@ -8,6 +8,9 @@ import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.service.GameLifecycleService;
 import com.example.aquaticboogaloo.service.GameResponseService;
 import com.example.aquaticboogaloo.service.GameService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,10 @@ public class GameManagementController {
     private final GameLifecycleService gameLifecycleService;
     private final GameResponseService gameResponseService;
 
+    @Operation(
+            summary = "Get games where current user is host or moderator",
+            description = "Returns a paged list of games. Supports filtering"
+    )
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
             Pageable pageable,
@@ -34,6 +41,13 @@ public class GameManagementController {
         return gameResponseService.findModeratedGamesPaged(pageable, gameFilter, userId);
     }
 
+    @Operation(
+            summary = "Get game field",
+            description = "Returns game field with all objects"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "403", description = "Game not found by id and moderator id")
+    })
     @GetMapping("/{gameId}/field")
     public GameFieldResponse getGameField(
             @PathVariable Long gameId,
@@ -42,6 +56,9 @@ public class GameManagementController {
         return gameResponseService.buildGameFieldResponseForModeratorView(gameId, userId);
     }
 
+    @Operation(
+            summary = "WIP"
+    )
     @GetMapping("/{gameId}/moderators")
     public void getModerators(
             @PathVariable Long gameId,
@@ -50,6 +67,9 @@ public class GameManagementController {
         // TODO
     }
 
+    @Operation(
+            summary = "WIP"
+    )
     @GetMapping("/{gameId}/events")
     public void getAllEvents(
             Pageable pageable,
@@ -62,6 +82,13 @@ public class GameManagementController {
 
         // for host only
 
+    @Operation(
+            summary = "Remove game by id"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "403", description = "Game not found by id and host id"),
+            @ApiResponse(responseCode = "400", description = "Game status is not NEW")
+    })
     @DeleteMapping("/{gameId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGame(
@@ -71,6 +98,13 @@ public class GameManagementController {
         gameLifecycleService.deleteGame(gameId, userId);
     }
 
+    @Operation(
+            summary = "Start game by id"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "403", description = "Game not found by id and host id"),
+            @ApiResponse(responseCode = "400", description = "Game status is not NEW or not enough players")
+    })
     @PatchMapping("/{gameId}/start")
     public void startGame(
             @PathVariable Long gameId,
@@ -80,6 +114,9 @@ public class GameManagementController {
     }
 
     // for NEW games ONLY
+    @Operation(
+            summary = "WIP"
+    )
     @PatchMapping("/{gameId}/ruleset")
     public void updateRuleset(
             @PathVariable Long gameId,
@@ -88,6 +125,9 @@ public class GameManagementController {
         // TODO
     }
 
+    @Operation(
+            summary = "WIP"
+    )
     @PatchMapping("/{gameId}/moderators")
     public void addModerator(
             @PathVariable Long gameId,
@@ -96,6 +136,9 @@ public class GameManagementController {
         // TODO
     }
 
+    @Operation(
+            summary = "WIP"
+    )
     @DeleteMapping("/{gameId}/moderators")
     public void removeModerator(
             @PathVariable Long gameId,

@@ -22,6 +22,8 @@ public class TurnResultService {
     public TurnResultResponse getTurnResults(Long gameId, Long userId, Integer turn) {
         Player player = playerService.findPlayerByGameIdAndUserId(gameId, userId);
 
+        // TODO: check game status?
+
         if (turn == null) {
             turn = player.getGame().getCurrentTurn() - 1;
         }

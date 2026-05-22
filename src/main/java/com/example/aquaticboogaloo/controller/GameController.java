@@ -14,6 +14,9 @@ import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.security.CurrentUserId;
 import com.example.aquaticboogaloo.security.CurrentUserView;
 import com.example.aquaticboogaloo.service.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +44,7 @@ public class GameController {
     private final AttackService attackHitService;
     private final TurnResultService turnResultService;
 
+    @Operation(summary = "Create new game")
     @PostMapping
     public ResponseEntity<Void> createGame(
             @CurrentUserId Long userId,
@@ -52,6 +56,10 @@ public class GameController {
                 .build();
     }
 
+    @Operation(summary = "Get game by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Game was not found")
+    })
     @GetMapping("/{gameId}")
     public GameResponse getGameById(
             @PathVariable Long gameId,
@@ -61,6 +69,10 @@ public class GameController {
         return gameResponseService.buildGameResponseWithPlayersCount(gameId, userId);
     }
 
+    @Operation(
+            summary = "Get games",
+            description = "Returns a paged list of games. Supports filtering"
+    )
     @GetMapping
     public PagedResponse<GameResponse> getAllPaged(
             Pageable pageable,
@@ -71,6 +83,15 @@ public class GameController {
         return gameResponseService.findAllPaged(pageable, gameFilter, userId);
     }
 
+    @Operation(
+            summary = "Join game",
+            description = "Creates player in game or join request. Only for NEW games"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Game was not found"),
+            @ApiResponse(responseCode = "409", description = "Player or join request already exists"),
+            @ApiResponse(responseCode = "400", description = "Game status is not NEW or wrong password")
+    })
     @PostMapping("/{gameId}/join")
     public GameJoinResponse joinGame(
             @PathVariable Long gameId,
@@ -80,6 +101,14 @@ public class GameController {
         return gameJoinService.joinGame(joinRequest, gameId, userId);
     }
 
+    @Operation(
+            summary = "Leave game",
+            description = "Removes current player from the game. Only for NEW games."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Player was not found"),
+            @ApiResponse(responseCode = "400", description = "Game status is not NEW")
+    })
     @DeleteMapping("/{gameId}/leave")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leaveGame(
@@ -89,7 +118,13 @@ public class GameController {
         gameJoinService.leaveGame(gameId, userId);
     }
 
-    // only current player's objects
+    @Operation(
+            summary = "Get game field",
+            description = "Returns game field objects visible to current player"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Player was not found")
+    })
     @GetMapping("/{gameId}/field")
     public GameFieldResponse getGameField(
             @PathVariable Long gameId,
@@ -98,7 +133,12 @@ public class GameController {
         return gameResponseService.buildGameFieldResponseForPlayerView(gameId, userId);
     }
 
-
+    @Operation(
+            summary = "Get last turn results"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Player was not found")
+    })
     @GetMapping("/{gameId}/turn-result")
     public TurnResultResponse getTurnResults(
             @PathVariable Long gameId,
@@ -108,6 +148,13 @@ public class GameController {
         return turnResultService.getTurnResults(gameId, userId, turn);
     }
 
+    @Operation(
+            summary = "Get known cells",
+            description = "Returns cells that have been attacked or mined in previous turns by a current player"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Player was not found")
+    })
     @GetMapping("/{gameId}/known-cells")
     public List<KnownCellResponse> getKnownCells(
             @PathVariable Long gameId,
