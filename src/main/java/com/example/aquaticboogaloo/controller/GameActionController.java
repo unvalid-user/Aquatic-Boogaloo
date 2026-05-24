@@ -54,8 +54,8 @@ public class GameActionController {
 
     @Operation(
             summary = "Create actions in game",
-            description = "Validates and then creates player's actions. Returns list of successfully added Actions" +
-                    " and list of Actions that failed validation with cause message"
+            description = "Validates and then creates the player's actions. Returns a list of successfully added actions" +
+                    " and a list of actions that failed validation with a cause message"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player not found by game id and user id"),
@@ -91,8 +91,8 @@ public class GameActionController {
 
     @Operation(
             summary = "Commit player's actions",
-            description = "Changes player status to COMMITED_ACTIONS." +
-                    " Player will not be able to create or cancel actions this turn"
+            description = "Changes player status to COMMITED_ACTIONS: " +
+                    "player cannot create or cancel actions for this turn"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player not found by game id and user id"),

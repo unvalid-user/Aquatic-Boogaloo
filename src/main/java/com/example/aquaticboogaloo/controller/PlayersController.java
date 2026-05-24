@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(
         name = "Players",
-        description = "Player profiles inside games: current player, player lookup, and management removal."
+        description = "Player profiles inside games: current player, lookup, and removal by host or moderator."
 )
 @RestController
 @RequestMapping("api/v1/players")
@@ -37,7 +37,7 @@ public class PlayersController {
 
     @Operation(
             summary = "Get current player's profile in a game",
-            description = "Returns the Player entity that belongs to the authenticated user in the requested game"
+            description = "Returns the player profile for the authenticated user in the requested game"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player was not found")

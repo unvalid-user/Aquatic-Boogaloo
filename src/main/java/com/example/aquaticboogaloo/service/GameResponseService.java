@@ -5,6 +5,7 @@ import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.dto.mapper.GameMapper;
 import com.example.aquaticboogaloo.dto.mapper.field_object.FieldObjectMapper;
 import com.example.aquaticboogaloo.dto.response.GameResponse;
+import com.example.aquaticboogaloo.dto.response.GameRulesetResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
@@ -31,13 +32,14 @@ import java.util.Set;
 public class GameResponseService {
 
     private final GameRepository gameRepository;
-    private final GameMapper gameMapper;
     private final PlayerService playerService;
     private final ShipService shipService;
     private final MineService mineService;
     private final ScanService scanService;
-    private final FieldObjectMapper fieldObjectMapper;
     private final GameService gameService;
+
+    private final FieldObjectMapper fieldObjectMapper;
+    private final GameMapper gameMapper;
 
 
     public GameResponse buildGameResponseWithPlayersCount(Long gameId, Long userId) {
@@ -127,4 +129,9 @@ public class GameResponseService {
         return response;
     }
 
+    public GameRulesetResponse getGameRuleset(Long gameId) {
+        Game game = gameService.findGameById(gameId);
+
+        return gameMapper.toResponse(game.getRuleset());
+    }
 }

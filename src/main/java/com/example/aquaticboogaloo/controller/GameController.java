@@ -4,10 +4,7 @@ import com.example.aquaticboogaloo.dto.PagedResponse;
 import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.dto.request.CreateGameJoinRequest;
 import com.example.aquaticboogaloo.dto.request.CreateGameRequest;
-import com.example.aquaticboogaloo.dto.response.GameJoinResponse;
-import com.example.aquaticboogaloo.dto.response.GameResponse;
-import com.example.aquaticboogaloo.dto.response.KnownCellResponse;
-import com.example.aquaticboogaloo.dto.response.PlayerResponse;
+import com.example.aquaticboogaloo.dto.response.*;
 import com.example.aquaticboogaloo.dto.response.action.TurnResultResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.entity.Game;
@@ -43,6 +40,7 @@ public class GameController {
     private final GameResponseService gameResponseService;
     private final AttackService attackHitService;
     private final TurnResultService turnResultService;
+    private final ModeratorService moderatorService;
 
     @Operation(summary = "Create new game")
     @PostMapping
@@ -85,7 +83,7 @@ public class GameController {
 
     @Operation(
             summary = "Join game",
-            description = "Creates player in game or join request. Only for NEW games"
+            description = "Creates a player in the game or a join request. Only for NEW games"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Game was not found"),
@@ -118,9 +116,30 @@ public class GameController {
         gameJoinService.leaveGame(gameId, userId);
     }
 
+    @GetMapping("/{gameId}/ruleset")
+    public GameRulesetResponse getRuleset(
+            @PathVariable Long gameId
+    ) {
+        return gameResponseService.getGameRuleset(gameId);
+    }
+
+
+    @Operation(
+            summary = "Get game moderators list"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Game was not found")
+    })
+    @GetMapping("/{gameId}/moderators")
+    public List<UserResponse> getModerators(
+            @PathVariable Long gameId
+    ) {
+        return moderatorService.getGameModerators(gameId);
+    }
+
     @Operation(
             summary = "Get game field",
-            description = "Returns game field objects visible to current player"
+            description = "Returns game field objects visible to the current player"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player was not found")
@@ -150,7 +169,7 @@ public class GameController {
 
     @Operation(
             summary = "Get known cells",
-            description = "Returns cells that have been attacked or mined in previous turns by a current player"
+            description = "Returns cells that have been attacked or mined in previous turns by the current player"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player was not found")
