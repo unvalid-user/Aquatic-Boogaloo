@@ -34,11 +34,19 @@ public class AttackService {
                 .toList();
     }
 
-    public List<Attack> getAttacksByPlayerIdAndTurn(Long playerId, int turn) {
+    public List<Attack> findAttacksByPlayerIdAndTurn(Long playerId, int turn) {
         return attackRepository.findByAction_Actor_IdAndAction_CreatedAtTurn(playerId, turn);
     }
 
-    public List<AttackHit> getAttackHitsByObjectOwnerIdAndTurn(Long playerId, int turn) {
+    public List<Attack> findAttacksByTurn(int turn) {
+        return attackRepository.findByAction_CreatedAtTurn(turn);
+    }
+
+    public List<AttackHit> findAttackHitsByObjectOwnerIdAndTurn(Long playerId, int turn) {
         return attackHitRepository.findByObjectOwner_IdAndAttack_Action_CreatedAtTurn(playerId, turn);
+    }
+
+    public List<AttackHit> findAttackHitsByTurn(int turn) {
+        return attackHitRepository.findByAttack_Action_CreatedAtTurn(turn);
     }
 }

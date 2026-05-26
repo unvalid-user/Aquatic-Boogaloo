@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(discordOAuth2UserService)
                         )
-                        .defaultSuccessUrl("/me", true)
+                        .defaultSuccessUrl("/api/v1/users/me", true)
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")

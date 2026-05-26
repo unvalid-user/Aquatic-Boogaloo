@@ -41,6 +41,7 @@ public class GameController {
     private final AttackService attackHitService;
     private final TurnResultService turnResultService;
     private final ModeratorService moderatorService;
+    private final PlayerService playerService;
 
     @Operation(summary = "Create new game")
     @PostMapping
@@ -80,6 +81,23 @@ public class GameController {
         Long userId = getCurrentUserId(currentUser);
         return gameResponseService.findAllPaged(pageable, gameFilter, userId);
     }
+
+
+    @Operation(
+            summary = "Get current player's profile in a game",
+            description = "Returns the player profile for the authenticated user in the requested game"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Player was not found")
+    })
+    @GetMapping("/{gameId}/players/me")
+    public PlayerResponse getCurrentPlayer(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        return playerService.getByGameIdAndUserId(gameId, userId);
+    }
+
 
     @Operation(
             summary = "Join game",
@@ -153,7 +171,7 @@ public class GameController {
     }
 
     @Operation(
-            summary = "Get last turn results"
+            summary = "Get turn results for player view"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player was not found")
@@ -164,7 +182,7 @@ public class GameController {
             @CurrentUserId Long userId,
             @RequestParam(required = false) Integer turn
     ) {
-        return turnResultService.getTurnResults(gameId, userId, turn);
+        return turnResultService.getTurnResultsForPlayerView(gameId, userId, turn);
     }
 
     @Operation(

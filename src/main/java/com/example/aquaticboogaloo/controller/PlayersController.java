@@ -35,21 +35,6 @@ public class PlayersController {
         return playerService.getAllPaged(filter, pageable);
     }
 
-    @Operation(
-            summary = "Get current player's profile in a game",
-            description = "Returns the player profile for the authenticated user in the requested game"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "404", description = "Player was not found")
-    })
-    @GetMapping("/me")
-    public PlayerResponse getCurrentPlayer(
-            @RequestParam Long gameId,
-            @CurrentUserId Long userId
-    ) {
-        return playerService.getByGameIdAndUserId(gameId, userId);
-    }
-
     @Operation(summary = "Get player by id")
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Player was not found")
@@ -60,6 +45,7 @@ public class PlayersController {
     ) {
         return playerService.getById(playerId);
     }
+
 
     @Operation(
             summary = "Remove player from the game",

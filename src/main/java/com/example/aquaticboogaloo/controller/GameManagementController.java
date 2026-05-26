@@ -5,12 +5,10 @@ import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.dto.request.AddModeratorRequest;
 import com.example.aquaticboogaloo.dto.response.GameResponse;
 import com.example.aquaticboogaloo.dto.response.UserResponse;
+import com.example.aquaticboogaloo.dto.response.action.TurnResultResponse;
 import com.example.aquaticboogaloo.dto.response.field.GameFieldResponse;
 import com.example.aquaticboogaloo.security.CurrentUserId;
-import com.example.aquaticboogaloo.service.GameLifecycleService;
-import com.example.aquaticboogaloo.service.GameResponseService;
-import com.example.aquaticboogaloo.service.GameService;
-import com.example.aquaticboogaloo.service.ModeratorService;
+import com.example.aquaticboogaloo.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -34,6 +32,7 @@ public class GameManagementController {
     private final GameLifecycleService gameLifecycleService;
     private final GameResponseService gameResponseService;
     private final ModeratorService moderatorService;
+    private final TurnResultService turnResultService;
 
     @Operation(
             summary = "Get games where current user is host or moderator",
@@ -47,6 +46,7 @@ public class GameManagementController {
     ) {
         return gameResponseService.findModeratedGamesPaged(pageable, gameFilter, userId);
     }
+
 
     @Operation(
             summary = "Get game field",
@@ -63,17 +63,32 @@ public class GameManagementController {
         return gameResponseService.buildGameFieldResponseForModeratorView(gameId, userId);
     }
 
+
     @Operation(
             summary = "WIP"
     )
-    @GetMapping("/{gameId}/events")
-    public void getAllEvents(
-            Pageable pageable,
+    @PatchMapping("/{gameId}")
+    public void updateGame(
             @PathVariable Long gameId,
             @CurrentUserId Long userId
-            // TODO: EventFilter
     ) {
         // TODO
+    }
+
+
+    @Operation(
+            summary = "Get turn results for moderator view"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "403", description = "Authenticated user is not a moderator or host of this game")
+    })
+    @GetMapping("/{gameId}/turn-result")
+    public TurnResultResponse getTurnResults(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId,
+            @RequestParam(required = false) Integer turn
+    ) {
+        return turnResultService.getTurnResultsForModeratorView(gameId, userId, turn);
     }
 
         // for host only
@@ -93,6 +108,7 @@ public class GameManagementController {
     ) {
         gameLifecycleService.deleteGame(gameId, userId);
     }
+
 
     @Operation(
             summary = "Start game by id"

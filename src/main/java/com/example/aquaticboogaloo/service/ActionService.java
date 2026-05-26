@@ -4,7 +4,6 @@ import com.example.aquaticboogaloo.dto.mapper.ActionMapper;
 import com.example.aquaticboogaloo.dto.request.ActionRequest;
 import com.example.aquaticboogaloo.dto.response.action.ActionCreationResponse;
 import com.example.aquaticboogaloo.dto.response.action.ActionResponse;
-import com.example.aquaticboogaloo.dto.response.action.AttackResponse;
 import com.example.aquaticboogaloo.entity.Action;
 import com.example.aquaticboogaloo.entity.BonusAction;
 import com.example.aquaticboogaloo.entity.Game;
@@ -102,7 +101,11 @@ public class ActionService {
         return actionRepository.findByActor_Id(playerId);
     }
 
-    public List<Action> getActionsByPlayerIdAndTurn(Long playerId, int turn) {
+    public List<Action> findActionsByTurn(int turn) {
+        return actionRepository.findByCreatedAtTurn(turn);
+    }
+
+    public List<Action> findActionsByPlayerIdAndTurn(Long playerId, int turn) {
         return actionRepository.findByActor_IdAndCreatedAtTurn(playerId, turn);
     }
 

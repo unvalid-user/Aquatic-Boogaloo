@@ -12,4 +12,6 @@ public interface AttackRepository extends JpaRepository<Attack, Long> {
     List<Attack> findByAction_Actor_Id(Long id);
 
     List<Attack> findByAction_Actor_IdAndAction_CreatedAtTurn(Long id, int createdAtTurn);
+
+    List<Attack> findByAction_CreatedAtTurn(int createdAtTurn);
 }

@@ -11,4 +11,6 @@ import java.util.List;
 public interface AttackHitRepository extends JpaRepository<AttackHit, Long> {
 
     List<AttackHit> findByObjectOwner_IdAndAttack_Action_CreatedAtTurn(Long id, int createdAtTurn);
+
+    List<AttackHit> findByAttack_Action_CreatedAtTurn(int createdAtTurn);
 }
