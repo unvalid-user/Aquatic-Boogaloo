@@ -4,6 +4,7 @@ import com.example.aquaticboogaloo.dto.PagedResponse;
 import com.example.aquaticboogaloo.dto.filter.PlayerFilter;
 import com.example.aquaticboogaloo.dto.mapper.PlayerMapper;
 import com.example.aquaticboogaloo.dto.response.PlayerResponse;
+import com.example.aquaticboogaloo.dto.response.UserInGameInfo;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Player;
 import com.example.aquaticboogaloo.entity.Player_;
@@ -27,6 +28,7 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final PlayerMapper playerMapper;
     private final GameService gameService;
+    private final UserService userService;
 
     public Player createPlayer(Game game, User user) {
         // TODO: lock game?
@@ -111,6 +113,21 @@ public class PlayerService {
         int rows = playerRepository.deleteByIdAndGameStatus(playerId, GameStatus.NEW);
 
         if (rows < 1) throw new ConflictException(FAILED_REMOVE_PLAYER.formatted(playerId));
+    }
+
+    public UserInGameInfo getUserInfoInGame(Long gameId, Long userId) {
+        Game game = gameService.findGameById(gameId);
+        User user = userService.findUserById(userId);
+
+        UserInGameInfo info = new UserInGameInfo();
+
+        info.setHost(game.getHostUser() == user);
+        info.setModerator(game.getModerators().contains(user));
+
+        playerRepository.findByUser_IdAndGame_Id(userId, gameId).ifPresent(value ->
+                info.setPlayer(playerMapper.toResponse(value)));
+
+        return info;
     }
 }
 

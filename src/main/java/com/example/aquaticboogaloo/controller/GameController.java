@@ -100,6 +100,22 @@ public class GameController {
 
 
     @Operation(
+            summary = "Get current user info in a game",
+            description = "Returns info for the authenticated user in the requested game"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Game was not found")
+    })
+    @GetMapping("/{gameId}/me")
+    public UserInGameInfo getUserInfoInGame(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        return playerService.getUserInfoInGame(gameId, userId);
+    }
+
+
+    @Operation(
             summary = "Join game",
             description = "Creates a player in the game or a join request. Only for NEW games"
     )
