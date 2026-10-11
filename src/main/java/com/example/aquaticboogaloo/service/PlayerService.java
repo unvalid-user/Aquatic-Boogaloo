@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 import static com.example.aquaticboogaloo.util.EntityConst.*;
 
@@ -128,6 +130,12 @@ public class PlayerService {
                 info.setPlayer(playerMapper.toResponse(value)));
 
         return info;
+    }
+
+    public List<PlayerResponse> getGamePlayers(Long gameId) {
+        Game game = gameService.findGameById(gameId);
+
+        return game.getPlayers().stream().map(playerMapper::toResponse).toList();
     }
 }
 

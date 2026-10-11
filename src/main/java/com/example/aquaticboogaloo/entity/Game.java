@@ -64,7 +64,9 @@ public class Game {
     // if all players commited actions -> force next turn
     private boolean forceNextTurn = false;
 
+    // TODO
     private Integer remainTurns;
+    // TODO
     private Instant endsAt;
     private Instant turnAdvanceAt;
     @Column(nullable = false)

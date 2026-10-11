@@ -100,6 +100,20 @@ public class GameController {
 
 
     @Operation(
+            summary = "Get game players"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Game was not found")
+    })
+    @GetMapping("/{gameId}/players")
+    public List<PlayerResponse> getGamePlayers(
+            @PathVariable Long gameId
+    ) {
+        return playerService.getGamePlayers(gameId);
+    }
+
+
+    @Operation(
             summary = "Get current user info in a game",
             description = "Returns info for the authenticated user in the requested game"
     )

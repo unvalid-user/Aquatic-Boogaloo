@@ -22,7 +22,7 @@ public class Attack implements ActionObject {
     @JoinColumn(name = "action_id", nullable = false)
     private Action action;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "attack", fetch = FetchType.EAGER)
     private AttackHit hit;
 
     @Enumerated(EnumType.STRING)
