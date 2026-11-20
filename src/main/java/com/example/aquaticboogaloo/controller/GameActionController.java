@@ -66,9 +66,10 @@ public class GameActionController {
     public ActionCreationResponse createActions(
             @PathVariable Long gameId,
             @CurrentUserId Long userId,
+            @RequestParam(required = false) Integer turn,
             @RequestBody List<ActionRequest> request
     ) {
-        return actionService.createActions(gameId, userId, request);
+        return actionService.createActions(gameId, userId, request, turn);
     }
 
     @Operation(
@@ -84,9 +85,10 @@ public class GameActionController {
     public void deleteAction(
             @PathVariable Long gameId,
             @PathVariable Long actionId,
+            @RequestParam(required = false) Integer turn,
             @CurrentUserId Long userId
     ) {
-        actionService.cancelAction(gameId, actionId, userId);
+        actionService.cancelAction(gameId, actionId, userId, turn);
     }
 
     @Operation(
@@ -102,8 +104,9 @@ public class GameActionController {
     @PatchMapping("/commit")
     public void commitActions(
             @PathVariable Long gameId,
+            @RequestParam(required = false) Integer turn,
             @CurrentUserId Long userId
     ) {
-        actionService.endTurn(gameId, userId);
+        actionService.endTurn(gameId, userId, turn);
     }
 }

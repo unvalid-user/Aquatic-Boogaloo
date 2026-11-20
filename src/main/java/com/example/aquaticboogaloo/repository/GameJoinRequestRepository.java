@@ -13,7 +13,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface GameJoinRequestRepository extends JpaRepository<GameJoinRequest, Long>, JpaSpecificationExecutor<GameJoinRequest> {
+public interface GameJoinRequestRepository extends
+        JpaRepository<GameJoinRequest, Long>,
+        JpaSpecificationExecutor<GameJoinRequest>
+{
+    Optional<GameJoinRequest> findByUser_IdAndGame_Id(Long userId, Long gameId);
+
     boolean existsByUserIdAndGameId(Long id, Long id1);
 
     Page<GameJoinRequest> findByGame_Id(Long gameId, Pageable pageable);

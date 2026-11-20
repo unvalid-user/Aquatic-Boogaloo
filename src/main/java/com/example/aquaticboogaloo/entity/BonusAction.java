@@ -1,11 +1,12 @@
 package com.example.aquaticboogaloo.entity;
 
 import com.example.aquaticboogaloo.entity.enums.ActionType;
-import com.example.aquaticboogaloo.entity.enums.BonusType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+// TODO: unique (player_id, type) ?
 
 @Entity
 @Table(name = "player_bonuses")

@@ -28,4 +28,6 @@ public interface ActionRepository extends JpaRepository<Action, Long> {
     List<Action> findByActor_IdAndCreatedAtTurnAndStatus(Long id, int createdAtTurn, ActionStatus status);
 
     List<Action> findByCreatedAtTurn(int createdAtTurn);
+
+    List<Action> findByActor_IdAndResultAtTurn(Long playerId, int resultAtTurn);
 }

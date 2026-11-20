@@ -5,14 +5,18 @@ import com.example.aquaticboogaloo.entity.*;
 import com.example.aquaticboogaloo.entity.enums.*;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;
 import com.example.aquaticboogaloo.entity.field_objects.ShipCell;
+import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
 import com.example.aquaticboogaloo.repository.GameRepository;
+import com.example.aquaticboogaloo.service.field_initializer.GameFieldInitializer;
 import com.example.aquaticboogaloo.service.resolve_turn.ResolveActionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.NOT_ENOUGH_PLAYERS;
@@ -21,14 +25,17 @@ import static com.example.aquaticboogaloo.exception.ExceptionMessage.WRONG_GAME_
 @Service
 @RequiredArgsConstructor
 public class GameLifecycleService {
+
     private final GameService gameService;
     private final UserService userService;
     private final ResolveActionService resolveActionService;
     private final PlayerService playerService;
-    private final PasswordEncoder passwordEncoder;
-    private final GameRepository gameRepository;
     private final ScanService scanService;
     private final ShieldService shieldService;
+
+    private final GameRepository gameRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public Game createGame(CreateGameRequest request, Long userId) {
@@ -37,6 +44,10 @@ public class GameLifecycleService {
         Game game = Game.buildWithRuleset(user);
         game.setTitle(request.getTitle());
         game.setDescription(request.getDescription());
+        game.setRemainTurns(request.getTurns());
+        game.setTurnDuration(Duration.ofSeconds(request.getTurnSeconds()));
+        game.setRequestToJoin(request.isRequestToJoin());
+        game.setForceNextTurn(request.isForceNextTurn());
 
         if (request.getPassword() != null && !request.getPassword().isBlank())
             game.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
@@ -44,10 +55,15 @@ public class GameLifecycleService {
         return gameRepository.save(game);
     }
 
+    @Transactional
     public void deleteGame(Long gameId, Long userId) {
-        Game game = gameService.findGameByIdAndHostId(gameId, userId);
+        Game game = gameService.findForUpdate(gameId);
 
-        if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
+        if (!game.getHostUser().getId().equals(userId))
+            throw new AccessDeniedException();
+
+        if (game.getStatus() != GameStatus.NEW)
+            throw new BadRequestException(WRONG_GAME_STATE);
 
         gameRepository.delete(game);
     }
@@ -55,17 +71,21 @@ public class GameLifecycleService {
     // TODO: test
     @Transactional
     public Game startGame(Long gameId, Long hostId) {
-        Game game = gameService.findGameByIdAndHostId(gameId, hostId);
+        Game game = gameService.findForUpdate(gameId);
+
+        if (!game.getHostUser().getId().equals(hostId))
+            throw new AccessDeniedException();
+        if (game.getStatus() != GameStatus.NEW)
+            throw new BadRequestException(WRONG_GAME_STATE);
 
         if (game.getPlayers().size() < 2)
             throw new BadRequestException(NOT_ENOUGH_PLAYERS);
 
-        // TODO: fix race condition
-        gameService.updateGameStatus(gameId, GameStatus.NEW, GameStatus.RESOLVING);
+        game.setStatus(GameStatus.RESOLVING);
+        game.setCurrentTurn(1);
 
         GameFieldInitializer initializer = new GameFieldInitializer(game);
         initializer.initializeAndBuildEntities();
-
 
         game.getPlayers().forEach(player -> {
             setDefaultValuesForPlayer(player);
@@ -86,13 +106,24 @@ public class GameLifecycleService {
          */
     }
 
-
-
     @Transactional
     public void resolveTurnIfAllPlayersReady(Long gameId) {
-        if (playerService.countPlanningPlayersByGameId(gameId) > 0) return;
+        Game game = gameService.findForUpdate(gameId);
 
-        resolveTurn(gameId);
+        if (game.getStatus() != GameStatus.ACTIVE || !game.isForceNextTurn()) return;
+        if (playerService.countPlanningPlayersByGameId(gameId) > 0) return;
+        resolveLockedTurn(game);
+    }
+
+    @Transactional
+    public void resolveTurnIfExpired(Long gameId) {
+        Game game = gameService.findForUpdate(gameId);
+
+        if (game.getStatus() != GameStatus.ACTIVE
+                || game.getTurnAdvanceAt() == null
+                || game.getTurnAdvanceAt().isAfter(Instant.now()))
+            return;
+        resolveLockedTurn(game);
     }
 
     /*
@@ -109,10 +140,14 @@ public class GameLifecycleService {
      */
     @Transactional
     public void resolveTurn(Long gameId) {
-        // TODO: fix race condition
-        gameService.updateGameStatus(gameId, GameStatus.ACTIVE, GameStatus.RESOLVING);
+        Game game = gameService.findForUpdate(gameId);
 
-        Game game = gameService.findGameById(gameId);
+        if (game.getStatus() != GameStatus.ACTIVE) return;
+        resolveLockedTurn(game);
+    }
+
+    private void resolveLockedTurn(Game game) {
+        game.setStatus(GameStatus.RESOLVING);
 
         // resolving planned actions
         resolvePlannedActions(game);
@@ -121,7 +156,6 @@ public class GameLifecycleService {
         updateShipStatuses(game);
         updatePlayerStatuses(game);
 
-
         var alivePlayers = game.getPlayers().stream()
                 .filter(player -> player.getStatus() != PlayerStatus.DEAD)
                 .toList();
@@ -129,13 +163,14 @@ public class GameLifecycleService {
         // TODO: might be a problem with non-relevant data (player.actions)
         // resetting players' energy + adding bonuses for ships + bonuses for surviving
         alivePlayers.forEach(player -> {
-                    player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());
-                    player.addPoints(game.getRuleset().getTurnSurviveBonus());
+            player.getBonuses().clear();
+            player.setEnergy(game.getRuleset().getDefaultPlayerEnergy());
+            player.addPoints(game.getRuleset().getTurnSurviveBonus());
 
-                    player.setStatus(PlayerStatus.PLANNING);
+            player.setStatus(PlayerStatus.PLANNING);
 
-                    accrueShipBonuses(player);
-                });
+            accrueShipBonuses(player);
+        });
         // adding bonus if player didn't plan any actions (except bonuses)
         alivePlayers.stream()
                 .filter(player -> player.getActions().stream()
@@ -149,7 +184,6 @@ public class GameLifecycleService {
                     );
                 });
 
-
         // increase game turn
         game.advanceTurn();
 
@@ -157,21 +191,28 @@ public class GameLifecycleService {
         scanService.deleteExpiredScans(game);
         shieldService.deleteExpiredShields(game);
 
-        game.setStatus(GameStatus.ACTIVE);
+        if (
+                (game.getRemainTurns() != null && game.getRemainTurns() <= 0)
+                || alivePlayers.isEmpty()
+        ) {
+            game.setStatus(GameStatus.ENDED);
+            game.setEndsAt(Instant.now());
+            game.setTurnAdvanceAt(null);
+        } else {
+            game.setStatus(GameStatus.ACTIVE);
+        }
     }
 
     private int updateShipStatuses(Game game) {
         var updatedShips = game.getPlayers().stream()
                 .flatMap(player -> player.getShips().stream())
                 .filter(ship ->
-                        ship.getStatus() != ShipStatus.DESTROYED
-                        && ship.getShipCells().stream().allMatch(ShipCell::isDestroyed)
+                        ship.getStatus() != ShipStatus.DESTROYED &&
+                        ship.getShipCells().stream().allMatch(ShipCell::isDestroyed)
                 )
                 .toList();
 
-        updatedShips.forEach(ship ->
-            ship.setStatus(ShipStatus.DESTROYED)
-        );
+        updatedShips.forEach(ship -> ship.setStatus(ShipStatus.DESTROYED));
 
         return updatedShips.size();
     }
@@ -179,14 +220,13 @@ public class GameLifecycleService {
     private int updatePlayerStatuses(Game game) {
         var updatedPlayers = game.getPlayers().stream()
                 .filter(player ->
-                        player.getStatus() != PlayerStatus.DEAD
-                        && player.getShips().stream().allMatch(ship -> ship.getStatus() == ShipStatus.DESTROYED)
+                        player.getStatus() != PlayerStatus.DEAD &&
+                        player.getShips().stream()
+                                .allMatch(ship -> ship.getStatus() == ShipStatus.DESTROYED)
                 )
                 .toList();
 
-        updatedPlayers.forEach(player ->
-                player.setStatus(PlayerStatus.DEAD)
-        );
+        updatedPlayers.forEach(player -> player.setStatus(PlayerStatus.DEAD));
 
         return updatedPlayers.size();
     }
@@ -219,7 +259,7 @@ public class GameLifecycleService {
 
                     ShipRule shipRule = ruleset.getShipRule(shipType);
 
-                    accrueBonus(player, shipRule.bonusType(), shipRule.bonusQuantity() *n);
+                    accrueBonus(player, shipRule.bonusType(), shipRule.bonusQuantity() * n);
                 });
     }
 

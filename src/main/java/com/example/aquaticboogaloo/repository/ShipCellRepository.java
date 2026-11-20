@@ -36,6 +36,7 @@ public interface ShipCellRepository extends JpaRepository<ShipCell, Long> {
     WHERE sc.locationX between :x - :r and :x + :r
         AND sc.locationY between :y - :r and :y + :r
         AND sc.ship.owner.game.id = :gameId
+        AND sc.isDestroyed = false
     """)
     int getNumberOfShipCellsInRadius(Long gameId, int x, int y, int r);
 }

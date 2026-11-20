@@ -30,8 +30,11 @@ public class JoinRequestService {
     private final UserService userService;
     private final PlayerService playerService;
 
-
-    public PagedResponse<JoinRequestResponse> findAllPaged(Pageable pageable, JoinRequestFilter filter, Long userId) {
+    public PagedResponse<JoinRequestResponse> findAllPaged(
+            Pageable pageable,
+            JoinRequestFilter filter,
+            Long userId
+    ) {
         gameService.findGameByIdAndHostIdOrModeratorId(filter.gameId(), userId);
 
         var spec = JoinRequestSpecifications.withFilter(filter);
@@ -50,8 +53,10 @@ public class JoinRequestService {
 
     @Transactional
     public void approveJoinRequest(Long joinRequestId, Long userId) {
+        Long gameId = findById(joinRequestId).getGame().getId();
+        gameService.findForUpdate(gameId);
         GameJoinRequest joinRequest = findByIdForUpdate(joinRequestId);
-        Game game = gameService.findGameByIdAndHostIdOrModeratorId(joinRequest.getGame().getId(), userId);
+        Game game = gameService.findGameByIdAndHostIdOrModeratorId(gameId, userId);
 
         if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
 
@@ -82,14 +87,12 @@ public class JoinRequestService {
     }
 
     private GameJoinRequest findById(Long joinRequestId) {
-        return joinRequestRepository.findById(joinRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
+        return joinRequestRepository.findById(joinRequestId).orElseThrow(() ->
+                new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
     }
 
     private GameJoinRequest findByIdForUpdate(Long joinRequestId) {
-        return joinRequestRepository.findByIdForUpdate(joinRequestId)
-                .orElseThrow(() -> new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
+        return joinRequestRepository.findByIdForUpdate(joinRequestId).orElseThrow(() ->
+                new ResourceNotFoundException(GameJoinRequest_.class_.getName(), ID, joinRequestId));
     }
-
-
 }

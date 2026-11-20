@@ -8,11 +8,22 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "actions")
+@Table(
+    name = "actions",
+    uniqueConstraints = @UniqueConstraint(
+        columnNames = {
+                "actor_player_id",
+                "created_at_turn",
+                "location_x",
+                "location_y"
+        }
+    )
+)
 @NoArgsConstructor
 @Getter
 @Setter
 public class Action {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -24,13 +35,13 @@ public class Action {
     // if null - bonus action have been used
     private Integer energyCost;
 
-    @Column(nullable = false)
+    @Column(name = "created_at_turn", nullable = false)
     private int createdAtTurn;
 
-    @Column(nullable = false)
+    @Column(name = "location_x", nullable = false)
     private int locationX;
 
-    @Column(nullable = false)
+    @Column(name = "location_y", nullable = false)
     private int locationY;
 
     @Enumerated(EnumType.STRING)
@@ -46,5 +57,10 @@ public class Action {
 
     public boolean isBonus() {
         return energyCost == null;
+    }
+
+    public void setFail(String cause) {
+        setStatus(ActionStatus.FAILED);
+        setFailCauseMessage(cause);
     }
 }

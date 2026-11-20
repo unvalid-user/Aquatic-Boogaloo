@@ -1,0 +1,25 @@
+# Explicit local-only profile: persisted H2, real services, test identities.
+server:
+  address: 127.0.0.1
+spring:
+  datasource:
+    url: jdbc:h2:file:./.local-data/aquatic;MODE=PostgreSQL;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  security:
+    oauth2:
+      client:
+        registration:
+          discord:
+            client-id: local-unused
+            client-secret: local-unused
+aquatic:
+  local-test-login: true

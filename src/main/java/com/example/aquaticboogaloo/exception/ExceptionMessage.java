@@ -20,6 +20,7 @@ public class ExceptionMessage {
     public static final String FAILED_REMOVE_PLAYER = "Failed to remove player with id: '%s'";
     public static final String FAILED_UPDATE_PLAYER = "Failed to update player with id: '%s'";
     public static final String HOST_CAN_NOT_BE_MODERATOR = "Game host cannot be a moderator";
+    public static final String GAME_TURN_CHANGED = "Turn has changed. Refresh game state";
 
     public static final String UNSUPPORTED_SHIP_LENGTH = "Unsupported ship length: %s";
 }

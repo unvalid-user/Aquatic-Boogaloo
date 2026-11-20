@@ -3,10 +3,8 @@ package com.example.aquaticboogaloo.repository;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -16,6 +14,14 @@ import java.util.Optional;
 
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+    SELECT g
+    FROM Game g
+    WHERE g.id = :id
+    """)
+    Optional<Game> findForUpdate(Long id);
+
     Optional<Game> findByIdAndHostUser_Id(Long gameId, Long userId);
 
     @Query("""

@@ -1,4 +1,4 @@
-package com.example.aquaticboogaloo.service;
+ package com.example.aquaticboogaloo.service.field_initializer;
 
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.field_objects.Ship;

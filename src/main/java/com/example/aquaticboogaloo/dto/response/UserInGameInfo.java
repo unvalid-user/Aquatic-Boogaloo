@@ -9,4 +9,5 @@ public class UserInGameInfo {
     boolean isHost;
     boolean isModerator;
     PlayerResponse player;
+    String joinRequestStatus;
 }

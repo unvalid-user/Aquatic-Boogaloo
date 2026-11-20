@@ -26,6 +26,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @Tag(
         name = "Game controller for player view"
@@ -36,6 +37,7 @@ import java.util.List;
 public class GameController {
 
     private final GameJoinService gameJoinService;
+    private final GameStateService gameStateService;
     private final GameLifecycleService gameLifecycleService;
     private final GameResponseService gameResponseService;
     private final AttackService attackHitService;
@@ -45,14 +47,14 @@ public class GameController {
 
     @Operation(summary = "Create new game")
     @PostMapping
-    public ResponseEntity<Void> createGame(
+    public ResponseEntity<Map<String, Long>> createGame(
             @CurrentUserId Long userId,
             @Valid @RequestBody CreateGameRequest createGameRequest
     ) {
         Game game = gameLifecycleService.createGame(createGameRequest, userId);
         return ResponseEntity
                 .created(buildUri(game.getId()))
-                .build();
+                .body(Map.of("id", game.getId()));
     }
 
     @Operation(summary = "Get game by id")
@@ -216,6 +218,24 @@ public class GameController {
         return attackHitService.getKnownCells(gameId, userId);
     }
 
+    // TODO: swagger
+    @GetMapping("/{gameId}/state")
+    public GameStateResponse getState(
+            @PathVariable Long gameId,
+            @CurrentUserId Long userId
+    ) {
+        return gameStateService.getState(gameId, userId);
+    }
+
+    // TODO: swagger
+    @GetMapping("/mine")
+    public PagedResponse<GameResponse> myGames(
+            Pageable pageable,
+            @ModelAttribute GameFilter filter,
+            @CurrentUserId Long userId
+    ) {
+        return gameResponseService.findJoinedGamesPaged(pageable, filter, userId);
+    }
 
     private Long getCurrentUserId(CurrentUserView currentUser) {
         return currentUser == null ? null : currentUser.getUserId();

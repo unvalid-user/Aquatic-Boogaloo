@@ -18,12 +18,14 @@ import java.util.Set;
 @Getter
 @Setter
 public class Game {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(nullable = false)
     private String title;
+
     private String description;
     private String avatarUrl;
 
@@ -39,9 +41,9 @@ public class Game {
 
     @ManyToMany
     @JoinTable(
-            name = "game_moderators",
-            joinColumns = @JoinColumn(name = "game_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+        name = "game_moderators",
+        joinColumns = @JoinColumn(name = "game_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> moderators = new HashSet<>();
 
@@ -62,11 +64,12 @@ public class Game {
     private int currentTurn = 0;
 
     // if all players commited actions -> force next turn
-    private boolean forceNextTurn = false;
+    private boolean forceNextTurn = true;
 
-    private Integer remainTurns;
+    private Integer remainTurns = 10;
     private Instant endsAt;
     private Instant turnAdvanceAt;
+
     @Column(nullable = false)
     private Duration turnDuration = Duration.ofDays(1);
 

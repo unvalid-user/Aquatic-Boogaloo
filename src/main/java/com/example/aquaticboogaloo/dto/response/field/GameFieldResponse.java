@@ -1,5 +1,6 @@
 package com.example.aquaticboogaloo.dto.response.field;
 
+import com.example.aquaticboogaloo.dto.response.KnownCellResponse;
 import lombok.Data;
 
 import java.util.List;
@@ -12,4 +13,5 @@ public class GameFieldResponse {
     private List<ShipResponse> ships;
     private List<MineResponse> mines;
     private List<ScanResponse> scans;
+    private List<KnownCellResponse> attacks;
 }

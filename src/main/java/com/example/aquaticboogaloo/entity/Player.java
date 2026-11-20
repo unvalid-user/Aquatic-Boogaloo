@@ -13,7 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "players")
+@Table(
+        name = "players",
+        uniqueConstraints = @UniqueConstraint(columnNames = {
+                "user_id",
+                "game_id"
+        })
+)
 @NoArgsConstructor
 @Getter
 @Setter
@@ -44,7 +50,6 @@ public class Player {
 
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Action> actions = new ArrayList<>();
-
 
     public void addShip(Ship ship) {
         ship.setOwner(this);

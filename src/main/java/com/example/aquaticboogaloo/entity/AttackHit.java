@@ -15,6 +15,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AttackHit {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -38,4 +39,7 @@ public class AttackHit {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "object_owner_player_id")
     private Player objectOwner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ShipCell hitShipCell;
 }

@@ -12,12 +12,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BonusActionService {
+
     private final BonusActionRepository bonusActionRepository;
 
 
-
-    // TODO: rename mb
-    //  + BonusAction -> unique (player_id, type)
     public boolean removeBonus(Player player, ActionType actionType) {
         int rows = bonusActionRepository.subtractBonus(player.getId(), actionType, 1);
 
@@ -30,7 +28,7 @@ public class BonusActionService {
         return rows > 0;
     }
 
-    public List<BonusAction> findBonusActionsByPlayerId(Long playerId) {
-        return bonusActionRepository.findByPlayer_Id(playerId);
+    public List<BonusAction> findBonusActionsByPlayerId(Long id) {
+        return bonusActionRepository.findByPlayer_Id(id);
     }
 }

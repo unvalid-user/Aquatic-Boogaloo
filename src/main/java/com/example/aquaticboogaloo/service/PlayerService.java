@@ -12,12 +12,15 @@ import com.example.aquaticboogaloo.entity.User;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.exception.*;
+import com.example.aquaticboogaloo.repository.GameJoinRequestRepository;
 import com.example.aquaticboogaloo.repository.PlayerRepository;
 import com.example.aquaticboogaloo.repository.specification.PlayerSpecifications;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 import static com.example.aquaticboogaloo.exception.ExceptionMessage.*;
 import static com.example.aquaticboogaloo.util.EntityConst.*;
@@ -25,14 +28,16 @@ import static com.example.aquaticboogaloo.util.EntityConst.*;
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
-    private final PlayerRepository playerRepository;
+
     private final PlayerMapper playerMapper;
     private final GameService gameService;
     private final UserService userService;
 
-    public Player createPlayer(Game game, User user) {
-        // TODO: lock game?
+    private final GameJoinRequestRepository joinRequestRepository;
+    private final PlayerRepository playerRepository;
 
+
+    public Player createPlayer(Game game, User user) {
         Player player = new Player();
         player.setGame(game);
         player.setUser(user);
@@ -60,18 +65,26 @@ public class PlayerService {
 
     @Transactional
     public void deletePlayer(Long playerId, Long userId) {
-        Player player = findPlayerById(playerId);
-        Game game = gameService.findGameByIdAndHostIdOrModeratorId(player.getGame().getId(), userId);
+        deletePlayer(findPlayerById(playerId), userId);
+    }
+    @Transactional
+    public void deletePlayer(Player player, Long userId) {
+        Game game = gameService.findForUpdate(player.getGame().getId());
 
+        if (!Objects.equals(player.getUser().getId(), userId)) {
+            gameService.findGameByIdAndHostIdOrModeratorId(
+                    player.getGame().getId(),
+                    userId
+            );
+        }
         if (game.getStatus() != GameStatus.NEW) throw new BadRequestException(WRONG_GAME_STATE);
 
-        removePlayerById(playerId);
+        playerRepository.delete(player);
     }
 
-
     public Player findPlayerById(Long playerId) {
-        return playerRepository.findById(playerId)
-                .orElseThrow(() -> new ResourceNotFoundException(Player_.class_.getName(), ID, playerId));
+        return playerRepository.findById(playerId).orElseThrow(() ->
+                new ResourceNotFoundException(Player_.class_.getName(), ID, playerId));
     }
 
     public void playerShouldNotExist(Long gameId, Long userId) {
@@ -84,13 +97,13 @@ public class PlayerService {
     }
 
     public Player findPlayerByGameIdAndUserId(Long gameId, Long userId) {
-        return playerRepository.findByUser_IdAndGame_Id(userId, gameId)
-                .orElseThrow(() -> new ResourceNotFoundException(Player_.class_.getName(), USER + ID, userId));
+        return playerRepository.findByUser_IdAndGame_Id(userId, gameId).orElseThrow(() ->
+                new ResourceNotFoundException(Player_.class_.getName(), USER + ID, userId));
     }
 
     public Player findPlayerByIdAndGameId(Long gameId, Long playerId) {
-        return playerRepository.findByIdAndGame_Id(playerId, gameId)
-                .orElseThrow(() -> new ResourceNotFoundException(Player_.class_.getName(), ID, playerId));
+        return playerRepository.findByIdAndGame_Id(playerId, gameId).orElseThrow(() ->
+                new ResourceNotFoundException(Player_.class_.getName(), ID, playerId));
     }
 
     public void subtractPlayerEnergy(Long playerId, int energyAmount) {
@@ -124,10 +137,13 @@ public class PlayerService {
         info.setHost(game.getHostUser() == user);
         info.setModerator(game.getModerators().contains(user));
 
-        playerRepository.findByUser_IdAndGame_Id(userId, gameId).ifPresent(value ->
-                info.setPlayer(playerMapper.toResponse(value)));
+        playerRepository.findByUser_IdAndGame_Id(userId, gameId).ifPresent(player ->
+                info.setPlayer(playerMapper.toResponse(player))
+        );
+        joinRequestRepository.findByUser_IdAndGame_Id(userId, gameId).ifPresent(r ->
+                info.setJoinRequestStatus(r.getStatus().name())
+        );
 
         return info;
     }
 }
-

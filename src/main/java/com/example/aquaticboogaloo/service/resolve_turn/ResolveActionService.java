@@ -21,6 +21,7 @@ import static com.example.aquaticboogaloo.service.resolve_turn.ActionFailMessage
 @Service
 @RequiredArgsConstructor
 public class ResolveActionService {
+
     private final ActionRepository actionRepository;
     private final ShieldRepository shieldRepository;
     private final ShipCellRepository shipCellRepository;
@@ -30,7 +31,7 @@ public class ResolveActionService {
     private final ScanRepository scanRepository;
 
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void resolveScanActions(Game game) {
         List<Action> scanActions = getActionsForResolving(game, ActionType.PLACE_SCAN);
 
@@ -39,7 +40,7 @@ public class ResolveActionService {
             Scan scan = new Scan();
             scan.setGame(game);
             scan.setAction(action);
-            scan.setExpirationTurn(game.getCurrentTurn()+1);
+            scan.setExpirationTurn(game.getCurrentTurn() + 1);
             scan.setShipCellsNumber(getShipCellsNumberInRadius(
                     game,
                     action.getLocationX(),
@@ -61,7 +62,7 @@ public class ResolveActionService {
         scanRepository.saveAll(scans);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void resolveShieldActions(Game game) {
         List<Action> shieldActions = getActionsForResolving(game, ActionType.PLACE_SHIELD);
 
@@ -79,38 +80,30 @@ public class ResolveActionService {
         shieldRepository.saveAll(shields);
     }
 
-    /*
-    mines can be placed only in vision area, where can be:
-    - neighbors' mines
-    - shields
-    also if there are several requests to place mine in one cell - all actions should fail
-
-    requires own transaction (NEW or NESTED?)
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    // All stages share the turn transaction and its game lock.
+    @Transactional
     public void resolveMineActions(Game game) {
         List<Action> mineActions = getActionsForResolving(game, ActionType.PLACE_MINE);
 
+        // group all planned mines by coords
         var groupedByCoords = mineActions.stream()
                 .collect(Collectors.groupingBy(a -> new Point(a.getLocationX(), a.getLocationY())));
 
         List<Mine> mines = new ArrayList<>();
         groupedByCoords.forEach((p, actions) -> {
             if (actions.size() > 1) {
-                actions.forEach(a -> {
-                    a.setStatus(ActionStatus.FAILED);
-                    a.setFailCauseMessage(MINES_CONFLICT);
-                });
+                actions.forEach(a ->
+                        a.setFail(MINES_CONFLICT));
                 return;
             }
 
             Action action = actions.getFirst();
             if (isCellBlockedByShield(game, p.x(), p.y())) {
-                action.setFailCauseMessage(SHIELD_BLOCK);
+                action.setFail(SHIELD_BLOCK);
             } else if (isCellBlockedByShip(game, p.x(), p.y())) {
-                action.setFailCauseMessage(SHIP_BLOCK);
+                action.setFail(SHIP_BLOCK);
             } else if (isCellBlockedByMine(game, p.x(), p.y())) {
-                action.setFailCauseMessage(MINE_BLOCK);
+                action.setFail(MINE_BLOCK);
             } else {
                 Mine mine = new Mine();
                 mine.setGame(game);
@@ -118,9 +111,7 @@ public class ResolveActionService {
                 mines.add(mine);
 
                 action.setStatus(ActionStatus.COMPLETED);
-                return;
             }
-            action.setStatus(ActionStatus.FAILED);
         });
 
         mineRepository.saveAll(mines);
@@ -141,7 +132,7 @@ public class ResolveActionService {
     if ship have been hit - ALL attackers get bonus
     shipCell destroys at the end of the function
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void resolveAttackActions(Game game) {
         List<Action> attackActions = getActionsForResolving(game, ActionType.ATTACK);
 
@@ -149,36 +140,37 @@ public class ResolveActionService {
                 .collect(Collectors.groupingBy(a -> new Point(a.getLocationX(), a.getLocationY())));
 
         Map<Ship, Set<AttackHit>> shipAttackHits = new HashMap<>();
+        List<AttackHit> allAttackHits = new ArrayList<>();
+        Map<Mine, List<Action>> mineAttacks = new HashMap<>();
+        // Resolve direct shots before mine retaliation, with a stable coordinate order.
+        // A mine cannot turn another player's simultaneous direct hit into a miss.
         groupedByCoords.forEach((point, actions) -> {
+            // resolving shield hits
             var shields = getShieldsByCoordinate(game, point.x(), point.y());
             if (!shields.isEmpty()) {
                 resolveShieldAttackHits(actions, shields);
                 return;
             }
 
+            // resolving shipCell hits
             var shipCell = getShipCellByCoordinate(game, point.x(), point.y());
             if (shipCell.isPresent() && !shipCell.get().isDestroyed()) {
                 var attackHits = resolveShipAttackHits(actions, shipCell.get());
+                allAttackHits.addAll(attackHits);
                 shipAttackHits
-                        .computeIfAbsent(shipCell.get().getShip(), ship -> new HashSet<>())
-                        .addAll(attackHits);
+                    .computeIfAbsent(shipCell.get().getShip(), ship -> new HashSet<>())
+                    .addAll(attackHits);
 
                 return;
             }
 
+            // collection mine hits and resolve them later
             var mine = getMineByCoordinate(game, point.x(), point.y());
             if (mine.isPresent()) {
-                resolveMineAttackHits(actions, mine.get()).stream()
-                        .filter(attackHit -> attackHit.getMineHitBack() != null)
-                        .collect(Collectors.groupingBy(attackHit -> attackHit.getMineHitBack().getShip()))
-                        .forEach((ship, hits) -> {
-                            shipAttackHits
-                                    .computeIfAbsent(ship, ship_ -> new HashSet<>())
-                                    .addAll(hits);
-                        });
-
+                mineAttacks.put(mine.get(), actions);
                 return;
             }
+
 
             List<Attack> attacks = new ArrayList<>();
             actions.forEach(action -> {
@@ -193,6 +185,21 @@ public class ResolveActionService {
             attackRepository.saveAll(attacks);
         });
 
+        // resolving mine hits
+        mineAttacks.forEach((mine, attacks) -> {
+            var mineHits = resolveMineAttackHits(attacks, mine);
+
+            allAttackHits.addAll(mineHits);
+            mineHits.stream()
+                    .filter(attackHit -> attackHit.getMineHitBack() != null)
+                    .collect(Collectors.groupingBy(attackHit -> attackHit.getMineHitBack().getShip()))
+                    .forEach((ship, hits) -> {
+                        shipAttackHits
+                                .computeIfAbsent(ship, ship_ -> new HashSet<>())
+                                .addAll(hits);
+                    });
+        });
+
         shipAttackHits.forEach((ship, hits) -> {
             if (!changeShipStatusToDestroyed(ship)) return;
 
@@ -200,13 +207,9 @@ public class ResolveActionService {
                     .filter(hit -> hit.getMineHitBack() == null)
                     .toList();
 
-            var mineHits = hits.stream()
-                    .filter(hit -> hit.getMineHitBack() != null)
-                    .toList();
-
             shipHits.forEach(hit -> {
-                        hit.setHitImpact(AttackHitImpact.DESTROYED);
-                    });
+                hit.setHitImpact(AttackHitImpact.DESTROYED);
+            });
             shipHits.stream()
                     .map(hit -> hit.getAttack().getAction().getActor())
                     .distinct()
@@ -215,10 +218,7 @@ public class ResolveActionService {
                     );
         });
 
-        var attackHits = shipAttackHits.values().stream()
-                .flatMap(Collection::stream)
-                .toList();
-        attackHitRepository.saveAll(attackHits);
+        attackHitRepository.saveAll(allAttackHits);
     }
 
     private boolean changeShipStatusToDestroyed(Ship ship) {
@@ -246,6 +246,7 @@ public class ResolveActionService {
 
             AttackHit attackHit = new AttackHit();
             attackHit.setAttack(attack);
+            attack.setHit(attackHit);
             attackHit.setObjectType(FieldObjectType.MINE);
             attackHit.setObjectOwner(mine.getAction().getActor());
             attackHit.setHitImpact(AttackHitImpact.DESTROYED);
@@ -256,7 +257,7 @@ public class ResolveActionService {
             var shipCells = getIntactShipCellsByPlayer(action.getActor());
             // damage attacker's ship IF player is ALIVE
             if (!shipCells.isEmpty()) {
-                ShipCell randomShipCell = shipCells.get((new Random()).nextInt(shipCells.size()));
+                ShipCell randomShipCell = shipCells.get(new Random().nextInt(shipCells.size()));
 
                 attackHit.setMineHitBack(randomShipCell);
 
@@ -277,7 +278,6 @@ public class ResolveActionService {
         return attackHits;
     }
 
-
     /*
     create and RETURN (not save yet) Attack + AttackHits
     set ShipCell.isDestroyed = true
@@ -292,30 +292,29 @@ public class ResolveActionService {
 
             AttackHit attackHit = new AttackHit();
             attackHit.setAttack(attack);
+            attack.setHit(attackHit);
             attackHit.setObjectType(FieldObjectType.SHIP);
+            attackHit.setHitShipCell(shipCell);
             attackHit.setObjectOwner(shipCell.getShip().getOwner());
             attackHit.setHitImpact(AttackHitImpact.DAMAGED);
 
             attackHits.add(attackHit);
 
             action.getActor().addPoints(action.getActor().getGame().getRuleset().getShipHitBonus());
-            shipCell.getShip().getOwner().removePoints(action.getActor().getGame().getRuleset().getShipHitPenalty());
 
             action.setStatus(ActionStatus.COMPLETED);
         });
 
+        shipCell.getShip().getOwner()
+                // TODO: to many entity calls
+                .removePoints(shipCell.getShip().getOwner().getGame().getRuleset().getShipHitPenalty());
         shipCell.setDestroyed(true);
         shipCell.getShip().setStatus(ShipStatus.DAMAGED);
 
         return attackHits;
     }
 
-    /*
-    create and save Attack + AttackHits
-    delete shields
-
-    can be in a separate transaction
-     */
+    // Every shield owner is notified, even when several shields occupy the same cell.
     private void resolveShieldAttackHits(List<Action> actions, List<Shield> shields) {
         List<AttackHit> attackHits = new ArrayList<>();
         actions.forEach(action -> {
@@ -323,23 +322,21 @@ public class ResolveActionService {
             attack.setAction(action);
             attack.setStatus(AttackStatus.HIT);
 
-            shields.forEach(shield -> {
-                AttackHit attackHit = new AttackHit();
-                attackHit.setAttack(attack);
-                attackHit.setObjectType(FieldObjectType.SHIELD);
-                attackHit.setObjectOwner(shield.getAction().getActor());
-                attackHit.setHitImpact(AttackHitImpact.DESTROYED);
-
-                attackHits.add(attackHit);
-            });
+            // TODO: ???
+            Shield shield = shields.getFirst();
+            AttackHit attackHit = new AttackHit();
+            attackHit.setAttack(attack);
+            attack.setHit(attackHit);
+            attackHit.setObjectType(FieldObjectType.SHIELD);
+            attackHit.setObjectOwner(shield.getAction().getActor());
+            attackHit.setHitImpact(AttackHitImpact.DESTROYED);
+            attackHits.add(attackHit);
 
             action.setStatus(ActionStatus.COMPLETED);
         });
 
         attackHitRepository.saveAll(attackHits);
-        shieldRepository.deleteAll(shields);
     }
-
 
     private List<ShipCell> getIntactShipCellsByPlayer(Player player) {
         return player.getShips().stream()

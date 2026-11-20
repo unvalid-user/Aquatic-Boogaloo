@@ -9,6 +9,8 @@ import com.example.aquaticboogaloo.repository.GameRepository;
 import com.example.aquaticboogaloo.repository.projection.GamePlayersCountProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.Instant;
@@ -59,6 +61,13 @@ public class GameService {
         return gameRepository.countPlayersByGameIds(List.of(gameId))
                 .getFirst()
                 .getPlayersCount();
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Game findForUpdate(Long gameId) {
+        return gameRepository.findForUpdate(gameId).orElseThrow(() ->
+                        new ResourceNotFoundException(GAME, ID, gameId)
+        );
     }
 
     public Map<Long, Integer> getPlayersCountsByGameIds(List<Long> gameIds) {

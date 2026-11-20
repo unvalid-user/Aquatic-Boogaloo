@@ -2,15 +2,17 @@ package com.example.aquaticboogaloo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class AquaticBoogalooApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AquaticBoogalooApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(AquaticBoogalooApplication.class, args);
 
-		System.out.println("Login: http://localhost:8080/login");
-		System.out.println("Swagger: http://localhost:8080/swagger-ui/index.html");
-	}
+        System.out.println("Login: http://localhost:8080/login");
+        System.out.println("Swagger: http://localhost:8080/swagger-ui/index.html");
+    }
 
 }

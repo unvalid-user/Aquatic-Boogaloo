@@ -15,6 +15,7 @@ import com.example.aquaticboogaloo.entity.enums.PlayerStatus;
 import com.example.aquaticboogaloo.event.PlayerCommitedActionsEvent;
 import com.example.aquaticboogaloo.exception.AccessDeniedException;
 import com.example.aquaticboogaloo.exception.BadRequestException;
+import com.example.aquaticboogaloo.exception.ConflictException;
 import com.example.aquaticboogaloo.exception.ResourceNotFoundException;
 import com.example.aquaticboogaloo.repository.ActionRepository;
 import jakarta.transaction.Transactional;
@@ -34,27 +35,40 @@ import static com.example.aquaticboogaloo.util.EntityConst.ID;
 @Service
 @RequiredArgsConstructor
 public class ActionService {
+
     private final PlayerService playerService;
-    private final ActionValidationService actionValidationService;
-    private final ActionRepository actionRepository;
+    private final GameService gameService;
+    private final ActionCreationService actionCreationService;
     private final BonusActionService bonusActionService;
+
+    private final ActionRepository actionRepository;
+
     private final ActionMapper actionMapper;
 
     private final ApplicationEventPublisher eventPublisher;
 
 
-    public ActionCreationResponse createActions(Long gameId, Long userId, List<ActionRequest> actionRequests) {
+    @Transactional
+    public ActionCreationResponse createActions(
+            Long gameId,
+            Long userId,
+            List<ActionRequest> actionRequests,
+            Integer expectedTurn
+    ) {
         if (actionRequests == null || actionRequests.isEmpty())
             throw new BadRequestException(EMPTY_REQUEST_BODY);
 
         Player player = getPlayerAndValidate(gameId, userId);
+        checkGameTurn(player.getGame(), expectedTurn);
 
-        return actionValidationService.createActions(player, actionRequests);
+        return actionCreationService.createActions(player, actionRequests);
     }
 
     @Transactional
-    public void cancelAction(Long gameId, Long actionId, Long userId) {
+    public void cancelAction(Long gameId, Long actionId, Long userId, Integer expectedTurn) {
         Player player = getPlayerAndValidate(gameId, userId);
+        checkGameTurn(player.getGame(), expectedTurn);
+
         Action action = findActionById(actionId);
 
         if (!Objects.equals(action.getActor().getId(), player.getId()))
@@ -71,13 +85,14 @@ public class ActionService {
             if (!bonusActionService.addBonus(action.getActor(), action.getType())) {
                 // TODO: log
             }
-            return;
+        } else {
+            playerService.addPlayerEnergy(action.getActor().getId(), action.getEnergyCost());
         }
-        playerService.addPlayerEnergy(action.getActor().getId(), action.getEnergyCost());
         actionRepository.delete(action);
     }
 
     private Player getPlayerAndValidate(Long gameId, Long userId) {
+        gameService.findForUpdate(gameId);
         Player player = playerService.findPlayerByGameIdAndUserId(gameId, userId);
         Game game = player.getGame();
 
@@ -110,8 +125,9 @@ public class ActionService {
     }
 
     @Transactional
-    public void endTurn(Long gameId, Long userId) {
+    public void endTurn(Long gameId, Long userId, Integer expectedTurn) {
         Player player = getPlayerAndValidate(gameId, userId);
+        checkGameTurn(player.getGame(), expectedTurn);
 
         boolean playerHasBonuses = player.getBonuses().stream()
                 .filter(bonus -> bonus.getType() != ActionType.ATTACK)
@@ -123,9 +139,11 @@ public class ActionService {
 
         player.setStatus(PlayerStatus.COMMITED_ACTIONS);
 
-        if (player.getGame().isForceNextTurn()) eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
+        if (player.getGame().isForceNextTurn())
+            eventPublisher.publishEvent(new PlayerCommitedActionsEvent(gameId));
     }
 
+    @Transactional
     public List<ActionResponse> getPlannedActions(Long gameId, Long userId) {
         Player player = getPlayerAndValidate(gameId, userId);
 
@@ -138,12 +156,21 @@ public class ActionService {
                 .toList();
     }
 
+    @Transactional
     public Map<ActionType, Integer> getBonusActions(Long gameId, Long userId) {
         Player player = getPlayerAndValidate(gameId, userId);
 
         return bonusActionService.findBonusActionsByPlayerId(player.getId())
                 .stream()
                 .filter(ba -> ba.getQuantity() > 0)
-                .collect(Collectors.groupingBy(BonusAction::getType, Collectors.summingInt(BonusAction::getQuantity)));
+                .collect(Collectors.groupingBy(
+                        BonusAction::getType,
+                        Collectors.summingInt(BonusAction::getQuantity)
+                ));
+    }
+
+    private void checkGameTurn(Game game, Integer expectedTurn) {
+        if (expectedTurn != null && expectedTurn != game.getCurrentTurn())
+            throw new ConflictException(GAME_TURN_CHANGED);
     }
 }

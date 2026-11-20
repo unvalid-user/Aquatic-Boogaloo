@@ -23,10 +23,12 @@ import static com.example.aquaticboogaloo.util.EntityConst.*;
 @RequiredArgsConstructor
 public class GameJoinService {
 
-    private final GameJoinRequestRepository joinRequestRepository;
     private final PlayerService playerService;
     private final GameService gameService;
     private final UserService userService;
+
+    private final GameJoinRequestRepository joinRequestRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     public GameJoinRequest createJoinRequest(Game game, User user) {
@@ -37,15 +39,14 @@ public class GameJoinService {
         return joinRequestRepository.save(gameJoinRequest);
     }
 
+    @Transactional
     public GameJoinResponse joinGame(CreateGameJoinRequest request, Long gameId, Long userId) {
-        Game game = gameService.findGameById(gameId);
+        Game game = gameService.findForUpdate(gameId);
         User user = userService.findUserById(userId);
 
+        gameStatusShouldBeNew(game);
         playerService.playerShouldNotExist(gameId, userId);
         joinRequestShouldNotExist(gameId, userId);
-
-        if (game.getStatus() != GameStatus.NEW)
-            throw new BadRequestException(WRONG_GAME_STATE);
 
         if (game.getPasswordHash() != null && !passwordMatches(request.getPassword(), game.getPasswordHash()))
             throw new BadRequestException(WRONG_GAME_PASSWORD);
@@ -73,13 +74,17 @@ public class GameJoinService {
         return rawPassword != null && passwordEncoder.matches(rawPassword, passwordHash);
     }
 
-    @Transactional
     public void leaveGame(Long gameId, Long userId) {
         Player player = playerService.findPlayerByGameIdAndUserId(gameId, userId);
 
-        if (player.getGame().getStatus() != GameStatus.NEW)
-            throw new BadRequestException(WRONG_GAME_STATE);
+        gameStatusShouldBeNew(player.getGame());
 
         playerService.removePlayerById(player.getId());
     }
+
+    public void gameStatusShouldBeNew(Game game) {
+        if (game.getStatus() != GameStatus.NEW)
+            throw new BadRequestException(WRONG_GAME_STATE);
+    }
+
 }

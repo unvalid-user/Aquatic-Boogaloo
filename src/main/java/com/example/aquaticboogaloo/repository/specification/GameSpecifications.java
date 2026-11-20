@@ -3,6 +3,7 @@ package com.example.aquaticboogaloo.repository.specification;
 import com.example.aquaticboogaloo.dto.filter.GameFilter;
 import com.example.aquaticboogaloo.entity.Game;
 import com.example.aquaticboogaloo.entity.Game_;
+import com.example.aquaticboogaloo.entity.Player_;
 import com.example.aquaticboogaloo.entity.User_;
 import com.example.aquaticboogaloo.entity.enums.GameStatus;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,16 +19,26 @@ public class GameSpecifications {
                 hasPassword(filter.requiresPasswordToJoin())
         );
     }
-    public static Specification<Game> withFilter(GameFilter filter, Long userId) {
+    public static Specification<Game> withFilterAndModeratedByUser(GameFilter filter, Long userId) {
+        if (userId == null) return null;
+
         return withFilter(filter).and(withHostId(userId).or(withModeratorId(userId)));
     }
 
-    private static Specification<Game> withModeratorId(Long userId) {
-        return (root, query, cb) -> {
-            if (userId == null) return null;
+    public static Specification<Game> withFilterAndJoinedByUser(GameFilter filter, Long userId) {
+        if (userId == null) return null;
 
-            return cb.equal(root.join(Game_.moderators).get(User_.id), userId);
-        };
+        return withFilter(filter).and(withUserJoined(userId));
+    }
+
+    private static Specification<Game> withUserJoined(Long userId) {
+        return (root, query, cb) ->
+                cb.equal(root.join(Game_.players).get(Player_.user).get(User_.id), userId);
+    }
+
+    private static Specification<Game> withModeratorId(Long userId) {
+        return (root, query, cb) ->
+                cb.equal(root.join(Game_.moderators).get(User_.id), userId);
     }
 
     private static Specification<Game> withHostId(Long userId) {
